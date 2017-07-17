@@ -28,7 +28,7 @@ function getObjsFromTable($table_names, $convert_func, ...$whereClauses){
 	if ($res->num_rows > 0) {
 		$objList = array();
 	    while($row = $res->fetch_assoc()) {
-	        array_push($objList, $convert_func($row));
+	        array_push($objList, call_user_func_array($convert_func, array($row)));
 	    }
 	    return $objList;
 	} else {
@@ -40,7 +40,7 @@ function getObjFromTable($table_names, $convert_func, ...$whereClauses){
 	$res = query("select * from ".$table_names.getClauseStr($whereClauses));
 	if ($res->num_rows > 0) {
 	    if($row = $res->fetch_assoc()) {
-	        return $convert_func($row);
+	        return call_user_func_array($convert_func, array($row));
 	    }
 	}
 	

@@ -21,7 +21,7 @@ CREATE TABLE `teacher_categ` (
 
 CREATE TABLE `teacher_prise` (
   `tp_tid` int(6) unsigned NOT NULL,
-  `tp_categ_id` int(6) NOT NULL unsigned,
+  `tp_categ_id` int(6) unsigned NOT NULL,
   `tp_prise` int NOT NULL,
   `tp_effective_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`tp_tid`, `tp_categ_id`, `tp_effective_time`)

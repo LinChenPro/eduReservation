@@ -1,0 +1,58 @@
+* add reservation no define time : achats (+ nb,  - day, begin, end)
+
+
+* teacher categ:
+
+get_teacher_categ(tid, all/only_selected)
+get_teacher_categ(tid, categ_id)
+arary(
+	obj{
+		tid, 
+		categ_id, 
+		categ_name, 
+		hasrecord,		
+		expire_time,
+		selected
+		prise,
+		count_students
+		count_all_reservations
+		count_active_reservations		
+		count_selections
+	}
+)
+
+atomic_set_categ_selection(tid, categ_id, selectedValue = true/false){
+	$teacher_categ = get_teacher_categ(tid, categ_id);(only expire_time, selected)
+	if(selectedValue){
+		teacher_categ->expire_time = null;
+		if(teacher_categ->selected){
+			update(teacher_categ);
+		}else{
+			isnert(teacher_categ);
+		}
+	}else{
+		teacher_categ->expire_time=current_date;
+		update(teacher_categ);
+	}
+}
+
+* teacher schedule: 
+
+get_teacher_schedule(tid, week_nb){
+	return cherche result of table teacher_schedule;
+	ts_slot_n par default '00000000000....'
+}
+
+atomic_set_teacher_schedule(tid, week_nb, from_day, from_h, to_day, to_h, value){
+	return cherche result of table teacher_schedule;
+	ts_slot_n par default '00000000000....'
+}
+
+get_teacher_reservations(tid, week_nb){
+	array of reservations (day<>null, from<>null, to<>null, statut<>cancelled);
+}
+
+get_teacher_operations(tid, week_nb){
+	array of reservations (day, from<>null, to<>null, statut=1);
+}
+

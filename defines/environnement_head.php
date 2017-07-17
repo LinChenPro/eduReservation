@@ -8,7 +8,7 @@ require_once('defines/tools.php');
 require_once('defines/pages.php');
 
 require_once('database/dbtools.php');
-require_once('objs/categ.php');echo 1;
+require_once('objs/categ.php');
 require_once('objs/user.php');
 
 
