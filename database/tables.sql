@@ -1,3 +1,16 @@
+DROP TABLE IF EXISTS `categories`;
+DROP TABLE IF EXISTS `users`;
+DROP TABLE IF EXISTS `teacher_categ`;
+DROP TABLE IF EXISTS `teacher_prise`;
+DROP TABLE IF EXISTS `teacher_remuneration`;
+DROP TABLE IF EXISTS `teacher_schedule`;
+DROP TABLE IF EXISTS `student_balance`;
+DROP TABLE IF EXISTS `student_session`;
+DROP TABLE IF EXISTS `student_operation`;
+DROP TABLE IF EXISTS `reservation`;
+DROP TABLE IF EXISTS `purchase`;
+
+
 CREATE TABLE `categories` (
   `categ_id` int(6) unsigned NOT NULL AUTO_INCREMENT,
   `categ_name` varchar(50),
@@ -20,11 +33,12 @@ CREATE TABLE `teacher_categ` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `teacher_prise` (
+  `tp_id` int(6) unsigned NOT NULL AUTO_INCREMENT,
   `tp_tid` int(6) unsigned NOT NULL,
   `tp_categ_id` int(6) unsigned NOT NULL,
   `tp_prise` int NOT NULL,
   `tp_effective_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`tp_tid`, `tp_categ_id`, `tp_effective_time`)
+  PRIMARY KEY (`tp_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `teacher_remuneration` (
@@ -58,7 +72,7 @@ CREATE TABLE `student_balance` (
 CREATE TABLE `student_session` (
   `session_id` int(6)  unsigned NOT NULL AUTO_INCREMENT,
   `session_sid` int(6) unsigned NOT NULL,
-  `session_expire_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `session_expire_time` datetime NOT NULL,
   `session_create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`session_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -69,6 +83,7 @@ CREATE TABLE `student_operation` (
   `ope_res_id` int(6)  unsigned,
   `ope_tid` int(6) unsigned NOT NULL,
   `ope_categ_id` int(6) unsigned NOT NULL,
+  `ope_tp_id` int(6) unsigned NOT NULL,
   `ope_day_nb` int unsigned NOT NULL,
   `ope_begin_nb` int unsigned NOT NULL,
   `ope_end_nb` int unsigned NOT NULL,
@@ -82,13 +97,28 @@ CREATE TABLE `reservation` (
   `res_tid` int(6) unsigned NOT NULL,
   `res_sid` int(6) unsigned NOT NULL,
   `res_categ_id` int(6) unsigned NOT NULL,
+  `res_tp_id` int(6) unsigned NOT NULL,
   `res_day_nb` int unsigned NOT NULL,
   `res_begin_nb` int unsigned NOT NULL,
   `res_end_nb` int unsigned NOT NULL,
   `res_statut` tinyint(1),
-  `res_last_modify` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `res_create_time` datetime,
+  `res_modify_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`res_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE `purchase` (
+  `pur_id` int(6)  unsigned NOT NULL AUTO_INCREMENT,
+  `pur_tid` int(6) unsigned NOT NULL,
+  `pur_sid` int(6) unsigned NOT NULL,
+  `pur_categ_id` int(6) unsigned NOT NULL,
+  `pur_tp_id` int(6) unsigned NOT NULL,
+  `pur_hour_total` int unsigned NOT NULL,
+  `pur_hour_rest` int unsigned NOT NULL,
+  `pur_statut` tinyint(1),
+  `res_create_time` datetime,
+  `res_modify_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`pur_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 

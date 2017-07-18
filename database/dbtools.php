@@ -92,3 +92,28 @@ function dbFindByKey($className, $key, ...$whereClauses){
 	}
 	return dbFindObj($className, ... $whereClauses);
 }
+
+function dbGetObjsByQuery($query_sql, $convert_func){
+	$res = query($query_sql);
+	if ($res->num_rows > 0) {
+		$objList = array();
+	    while($row = $res->fetch_assoc()) {
+	        array_push($objList, call_user_func_array($convert_func, array($row)));
+	    }
+	    return $objList;
+	} else {
+	    return null;
+	}
+}
+
+function dbGetObjByQuery($query_sql, $convert_func){
+	$res = query($query_sql);
+	if ($res->num_rows > 0) {
+	    if($row = $res->fetch_assoc()) {
+	        return call_user_func_array($convert_func, array($row));
+	    }
+	} 
+
+	return null;
+}
+

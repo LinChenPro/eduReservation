@@ -10,9 +10,7 @@ arary(
 		tid, 
 		categ_id, 
 		categ_name, 
-		hasrecord,		
 		expire_time,
-		selected
 		prise,
 		count_students
 		count_all_reservations
