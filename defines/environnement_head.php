@@ -10,8 +10,12 @@ require_once('defines/pages.php');
 require_once('database/dbtools.php');
 require_once('objs/categ.php');
 require_once('objs/user.php');
+require_once('objs/teacher_categ.php');
 
 
 // views
-include_once('views/header.php');
+
+if("html"==getPageType()){
+	include_once('views/header.php');
+}
 

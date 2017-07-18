@@ -36,7 +36,7 @@ CREATE TABLE `teacher_prise` (
   `tp_id` int(6) unsigned NOT NULL AUTO_INCREMENT,
   `tp_tid` int(6) unsigned NOT NULL,
   `tp_categ_id` int(6) unsigned NOT NULL,
-  `tp_prise` int NOT NULL,
+  `tp_prise` int,
   `tp_effective_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`tp_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
