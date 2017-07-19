@@ -22,9 +22,9 @@ $page_infos = array(
 		'file' => "teacher_calendar.php",
 		'type' => "html"
 	),
-	"teacher_calendar_update" => array(
+	"teacher_calendar_treate" => array(
 		'title' => "teacher's calendar", 
-		'file' => "teacher_calendar_update.php",
+		'file' => "teacher_calendar_treate.php",
 		'type' => "ajax"
 	)
 );
