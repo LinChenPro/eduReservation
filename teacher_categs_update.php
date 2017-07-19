@@ -1,5 +1,5 @@
 <?php
-$page_name = "teacher_categs_update";
+$page_name = "teacher_calendar_update";
 
 require_once('defines/environnement_head.php');
 

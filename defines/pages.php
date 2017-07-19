@@ -14,8 +14,18 @@ $page_infos = array(
 	),
 	"teacher_categs_update" => array(
 		'title' => "teacher's categs", 
-		'file' => "teacher_categs.php",
+		'file' => "teacher_categs_update.php",
 		'type' => "data"
+	),
+	"teacher_calendar" => array(
+		'title' => "teacher's calendar", 
+		'file' => "teacher_calendar.php",
+		'type' => "html"
+	),
+	"teacher_calendar_update" => array(
+		'title' => "teacher's calendar", 
+		'file' => "teacher_calendar_update.php",
+		'type' => "ajax"
 	)
 );
 
