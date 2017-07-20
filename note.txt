@@ -1,38 +1,8 @@
-* add reservation no define time : achats (+ nb,  - day, begin, end)
-
-
-* teacher categ:
-
-get_teacher_categ(tid, all/only_selected)
-get_teacher_categ(tid, categ_id)
-arary(
-	obj{
-		tid, 
-		categ_id, 
-		categ_name, 
-		expire_time,
-		prise,
-		count_students
-		count_all_reservations
-		count_active_reservations		
-		count_selections
-	}
-)
-
-atomic_set_categ_selection(tid, categ_id, selectedValue = true/false){
-	$teacher_categ = get_teacher_categ(tid, categ_id);(only expire_time, selected)
-	if(selectedValue){
-		teacher_categ->expire_time = null;
-		if(teacher_categ->selected){
-			update(teacher_categ);
-		}else{
-			isnert(teacher_categ);
-		}
-	}else{
-		teacher_categ->expire_time=current_date;
-		update(teacher_categ);
-	}
-}
+purchase : res_ error
+add 
+	hours_paid
+	hours_not_paid
+	hours_consume
 
 * teacher schedule: 
 
@@ -53,4 +23,84 @@ get_teacher_reservations(tid, week_nb){
 get_teacher_operations(tid, week_nb){
 	array of reservations (day, from<>null, to<>null, statut=1);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+->
+tid,[week_nb]
+					->
+					uid, week_nb
+					<-
+					stamp
+
+					->
+					uid, week_nb
+					<-
+					["000...", "001...", "001...", "001...", "001...", "001...", "001..."]
+
+					->
+					uid, week_nb
+					<-
+					all reservations this week (tid, sid, tname, sname, day_nb, h1, h2,categ_id, categ_name, statut, my_role)
+
+					->
+					uid, week_nb
+					<-
+					all my operations this week (tid, sid, tname, sname, day_nb, h1, h2,categ_id, categ_name, statut, my_role)
+
+<-
+$DAY_ZERO = new Date(2015-08-01); monday
+
+funciton getCurrentDay
+funciton dateToNb($date){
+	diff($DAY_ZERO, $date, format_day);
+}
+function dateToWeekNb($date){
+	dayNbToWeekNb(dateToNb($date));
+}
+funciton dayNbToWeekNb(nb){
+	nb/7
+}
+function getWeekFirstDay(week_nb){
+	week_nb * 7
+}
+
+
+
+
+stamp
+crt_day_nb
+crt_week_nb
+demande_week_nb
+days = [
+	{nb, date_str, week_str, hours=[0,1,0,1,1,0...]}
+	{nb, date_str, week_str, hours=[0,1,0,1,1,0...]}
+	{nb, date_str, week_str, hours=[0,1,0,1,1,0...]}
+	{nb, date_str, week_str, hours=[0,1,0,1,1,0...]}
+	{nb, date_str, week_str, hours=[0,1,0,1,1,0...]}
+	{nb, date_str, week_str, hours=[0,1,0,1,1,0...]}
+	{nb, date_str, week_str, hours=[0,1,0,1,1,0...]}
+]
+reservations = 
+[
+
+]	
+options = 
+[
+
+]	
+
+teacher schedule : where selected_tid in(tid, sid) : all res et ope in which i'm teacher or student
+student schedule : where tid in(selected_sid, selected_tid) or sid in(selected_sid, selected_tid) all res et ope in which me or the teacher is teacher or student 
+
 

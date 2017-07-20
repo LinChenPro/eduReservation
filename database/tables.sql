@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS `student_session`;
 DROP TABLE IF EXISTS `student_operation`;
 DROP TABLE IF EXISTS `reservation`;
 DROP TABLE IF EXISTS `purchase`;
+DROP TABLE IF EXISTS `weekly_action_stamp`;
 
 
 CREATE TABLE `categories` (
@@ -121,4 +122,9 @@ CREATE TABLE `purchase` (
   PRIMARY KEY (`pur_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-
+CREATE TABLE `weekly_action_stamp` (
+  `stamp_uid` int(6) unsigned NOT NULL,
+  `stamp_week_nb` int unsigned NOT NULL,
+  `stamp_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`stamp_uid`, `stamp_week_nb`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
