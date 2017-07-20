@@ -85,6 +85,7 @@ CREATE TABLE `student_operation` (
   `ope_tid` int(6) unsigned NOT NULL,
   `ope_categ_id` int(6) unsigned NOT NULL,
   `ope_tp_id` int(6) unsigned NOT NULL,
+  `ope_week_nb` int unsigned NOT NULL,
   `ope_day_nb` int unsigned NOT NULL,
   `ope_begin_nb` int unsigned NOT NULL,
   `ope_end_nb` int unsigned NOT NULL,
@@ -99,6 +100,7 @@ CREATE TABLE `reservation` (
   `res_sid` int(6) unsigned NOT NULL,
   `res_categ_id` int(6) unsigned NOT NULL,
   `res_tp_id` int(6) unsigned NOT NULL,
+  `res_week_nb` int unsigned NOT NULL,
   `res_day_nb` int unsigned NOT NULL,
   `res_begin_nb` int unsigned NOT NULL,
   `res_end_nb` int unsigned NOT NULL,
@@ -117,8 +119,8 @@ CREATE TABLE `purchase` (
   `pur_hour_total` int unsigned NOT NULL,
   `pur_hour_rest` int unsigned NOT NULL,
   `pur_statut` tinyint(1),
-  `res_create_time` datetime,
-  `res_modify_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `pur_create_time` datetime,
+  `pur_modify_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`pur_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

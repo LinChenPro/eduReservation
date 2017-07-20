@@ -4,7 +4,8 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 // require_once('outside_includes/libs.php');
 
 // datas
-require_once('defines/tools.php');
+require_once('tools/string_tools.php');
+require_once('tools/date_tools.php');
 require_once('defines/pages.php');
 
 require_once('database/dbtools.php');

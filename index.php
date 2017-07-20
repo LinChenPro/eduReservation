@@ -11,4 +11,3 @@ showAllPageLinks();
 
 <?php
 include_once('defines/environnement_foot.php');
-

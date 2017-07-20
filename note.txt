@@ -59,23 +59,6 @@ tid,[week_nb]
 					all my operations this week (tid, sid, tname, sname, day_nb, h1, h2,categ_id, categ_name, statut, my_role)
 
 <-
-$DAY_ZERO = new Date(2015-08-01); monday
-
-funciton getCurrentDay
-funciton dateToNb($date){
-	diff($DAY_ZERO, $date, format_day);
-}
-function dateToWeekNb($date){
-	dayNbToWeekNb(dateToNb($date));
-}
-funciton dayNbToWeekNb(nb){
-	nb/7
-}
-function getWeekFirstDay(week_nb){
-	week_nb * 7
-}
-
-
 
 
 stamp
