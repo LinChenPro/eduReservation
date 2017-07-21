@@ -76,6 +76,28 @@ days = [
 ]
 reservations = 
 [
+ "select reservation.*, t.user_name as t_name, s.user_name as s_name, c.categ_name as categ_name "
+."from reservation, users as t, users as s, categories as c "
+."where t.user_id=res_tid and s.user_id=res_sid and c.categ_id=res_categ_id and res_statut=1 "
+."and 1 in(res_tid, res_sid)"
+
+
+select reservation.*, t.user_name as t_name, s.user_name as s_name, c.categ_name as categ_name
+from reservation, users as t, users as s, categories as c
+where t.user_id=res_tid and s.user_id=res_sid and c.categ_id=res_categ_id and res_statut=1
+and 1 in(res_tid, res_sid)
+
+
+res_id
+res_tid name
+res_sid name
+res_categ_id name
+res_day_nb
+res_begin_nb
+res_end_nb
+res_statut
+
+res_week_nb
 
 ]	
 options = 

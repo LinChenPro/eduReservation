@@ -3,12 +3,6 @@ define("TCA_TYPE_LOAD", "load");
 define("TCA_TYPE_UPDATE", "upload");
 define("TCA_TYPE_REFRESH", "refresh");
 
-class DayCalendar{
-	public $day_nb;
-	public $day_str;
-	public $day_status;
-}
-
 class TeacherCalendarResponse{
 	public $tid;
 	public $action;
@@ -20,7 +14,7 @@ class TeacherCalendarResponse{
 	public $succes;
 	public $error;
 	public $infos;
-
+ 
 	public static function newInstance($tid, $action, $week_nb, $timestamp, $succes){
 		$response = new TeacherCalendarResponse();
 		$response->tid = $tid;
@@ -49,13 +43,63 @@ function loadTeacherCalendar($tid, $week_nb){
 
 	return $response;
 }
+/* ------------------------------------------------------ */
+define("RES_STATUT_CREATED", 1);
+define("RES_STATUT_DELETING", 2);
+define("RES_STATUT_DELETED", 3);
+define("RES_STATUT_FIXED", 4);
+define("RES_STATUT_ACTIVE", 5);
+define("RES_STATUT_FINISHED", 6);
 
-function getUserReservations($uid, $week_nb){
-	return null;
+class Reservation{
+	public $res_id;
+	public $tid;
+	public $t_name;
+	public $sid;
+	public $s_name;
+	public $categ_id;
+	public $categ_name;
+	public $day_nb;
+	public $begin_nb;
+	public $end_nb;
+	public $statut;
 }
 
+function getUserReservations($uid, $week_nb){
+	$sql = "select reservation.*, t.user_name as t_name, s.user_name as s_name, c.categ_name as categ_name "
+		."from reservation, users as t, users as s, categories as c "
+		."where t.user_id=res_tid and s.user_id=res_sid and c.categ_id=res_categ_id and res_statut in(1,4,5,6) "
+		."and 1 in(res_tid, res_sid)";
+
+	$reservationArr = dbGetObjsByQuery($sql, function($row){
+		$reservation = new Reservation();
+		$reservation->res_id = $row["res_id"];
+		$reservation->tid = $row["res_tid"];
+		$reservation->t_name = $row["t_name"];
+		$reservation->sid = $row["res_sid"];
+		$reservation->s_name = $row["s_name"];
+		$reservation->categ_id = $row["res_categ_id"];
+		$reservation->categ_name = $row["categ_name"];
+		$reservation->day_nb = $row["res_day_nb"];
+		$reservation->begin_nb = $row["res_begin_nb"];
+		$reservation->end_nb = $row["res_end_nb"];
+		$reservation->statut = $row["res_statut"];
+		return $reservation;
+	});
+
+	return $reservationArr;
+
+}
+
+/* --------------------------------------------------------------- */
 function getUserOperations($uid, $week_nb){
 	return null;
+}
+/* ---------------------------------------------------------------- */
+class DayCalendar{
+	public $day_nb;
+	public $day_str;
+	public $day_status;
 }
 
 function getTeacherCalendar($tid, $week_nb){

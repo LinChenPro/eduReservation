@@ -41,10 +41,12 @@ query(
 	."'100101101001100101101001100101101001100101101001')"
 );
 
+
+query("insert into reservation(res_tid,res_sid,res_categ_id,res_tp_id,res_week_nb,res_day_nb,res_begin_nb,res_end_nb,res_statut,res_create_time) values(1, 2, 1, 1, 1, 11, 20, 21, 1, CURRENT_TIMESTAMP)");
+query("insert into reservation(res_tid,res_sid,res_categ_id,res_tp_id,res_week_nb,res_day_nb,res_begin_nb,res_end_nb,res_statut,res_create_time) values(3, 1, 2, 2, 1, 12, 30, 30, 1, CURRENT_TIMESTAMP)");
+query("insert into reservation(res_tid,res_sid,res_categ_id,res_tp_id,res_week_nb,res_day_nb,res_begin_nb,res_end_nb,res_statut,res_create_time) values(2, 3, 3, 3, 1, 13, 40, 41, 2, CURRENT_TIMESTAMP)");
+
 */
-
-
-
 
 
 
