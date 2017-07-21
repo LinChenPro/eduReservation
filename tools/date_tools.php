@@ -9,6 +9,10 @@ function getDateZero(){
 	return new DateTime(DATE_ZERO);
 }
 
+function getDateZeroStr(){
+	return (new DateTime(DATE_ZERO))->format(DB_DATETIME_FORMAT);
+}
+
 // DateTime to day_nb
 function dateToDayNb($date){
 	global $CURRENT_DATETIME;
@@ -25,6 +29,10 @@ function dateToWeekNb($date){
 		$date = $CURRENT_DATETIME;
 	}
 	return dayNbToWeekNb(dateToDayNb($date));
+}
+
+function intdiv($a, $b){
+		return ($a-($a%$b))/$b;
 }
 
 // day_nb to week_nb

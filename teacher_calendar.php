@@ -29,44 +29,71 @@ var uid=<?=$uid?>;
 var demandeUrl = "/teacher_calendar_treate.php"
 var week_nb = null;
 
+var queryLoad = null;
+var queryUpdate = null;
+var queryRefresh = null;
+
+function checkMultyAjax(){
+	return (queryLoad == null && queryUpdate == null);
+}
+
+function abortRefreshAjax(){
+	if(queryRefresh != null){
+		queryRefresh.abort();
+	}
+}
+
 function sentTCDemand(d1, t1, d2, t2){
-	var demande = { 'action' : "update", 'uid' : uid, 'week_nb' : week_nb, 'd1': d1,'t1' : t1,'d2' : d2,'t2' : t2 };
-	$.post(demandeUrl, demande, treateUpdateResponse, "json");
+	if(checkMultyAjax()){
+		var demande = { 'action' : "update", 'uid' : uid, 'week_nb' : week_nb, 'd1': d1,'t1' : t1,'d2' : d2,'t2' : t2 };
+		queryUpdate = $.post(demandeUrl, demande, treateUpdateResponse, "json");
+	}
 }
 
 function loadTCData(demande_week_nb){
-	if(demande_week_nb!=null){
-		week_nb = demande_week_nb;
-	}
-	send_week_nb = demande_week_nb==null?week_nb:demande_week_nb;
-	var demande = { 'action' : "load", 'uid' : uid, 'week_nb' : send_week_nb};
-	$.post(demandeUrl, demande, treateLoadResponse, "json");
+	if(checkMultyAjax()){
+		if(demande_week_nb!=null){
+			week_nb = demande_week_nb;
+		}
+		send_week_nb = demande_week_nb==null?week_nb:demande_week_nb;
+		var demande = { 'action' : "load", 'uid' : uid, 'week_nb' : send_week_nb};
+
+		queryLoad = $.post(demandeUrl, demande, treateLoadResponse, "json");
+	}	
 }
 
 function autoTCRefresh(){
-	var demande = { 'action' : "refresh", 'uid' : uid, 'week_nb' : week_nb};
-	$.post(demandeUrl, demande, treateRefreshResponse, "json");
+	if(checkMultyAjax()){
+		var demande = { 'action' : "refresh", 'uid' : uid, 'week_nb' : week_nb};
+		queryRefresh = $.post(demandeUrl, demande, treateRefreshResponse, "json");
+	}
 }
 
 function treateUpdateResponse(responseData){
-	showScheduleData(responseData);
 	week_nb = responseData["week_nb"];
+	showScheduleData(responseData);
+	queryUpdate = null;
+	autoTCRefresh();
 }
 
 function treateLoadResponse(responseData){
-	showScheduleData(responseData);
 	week_nb = responseData["week_nb"];
+	showScheduleData(responseData);
+	queryLoad = null;
+//	autoTCRefresh();
 }
 
 function treateRefreshResponse(responseData){
 	if(responseData["week_nb"] == week_nb){
 		showScheduleData(responseData);
 	}
+	queryRefresh = null;
 	autoTCRefresh();
 }
 
 function showScheduleData(schedule){
-	$("#showData").html(schedule.action+" week_nb="+schedule.week_nb);
+//	$("#showData").html(schedule.action+" week_nb="+schedule.week_nb);
+	$("#showData").html(JSON.stringify(schedule));
 }
 
 $("#sendDemande").click(function(){
@@ -82,7 +109,7 @@ $("#week_next").click(function(){
 });
 
 loadTCData();
-autoTCRefresh();
+//autoTCRefresh();
 
 </script>
 

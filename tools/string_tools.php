@@ -12,3 +12,8 @@ function concat($firstSep, $sep, ...$values){
 	}
 	return $str;
 }
+
+function echoln($s){
+	echo $s;
+	echo "<br>\n";
+}
