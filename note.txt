@@ -86,4 +86,5 @@ options =
 teacher schedule : where selected_tid in(tid, sid) : all res et ope in which i'm teacher or student
 student schedule : where tid in(selected_sid, selected_tid) or sid in(selected_sid, selected_tid) all res et ope in which me or the teacher is teacher or student 
 
-
+The only resource critic is the calendar week of every one.
+So the atomic opreation begin with the update of this table.
