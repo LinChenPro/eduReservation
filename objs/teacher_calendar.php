@@ -19,6 +19,17 @@ class TeacherCalendarResponse{
 	public $operation_data;
 	public $succes;
 	public $error;
+	public $infos;
+
+	public static function newInstance($tid, $action, $week_nb, $timestamp, $succes){
+		$response = new TeacherCalendarResponse();
+		$response->tid = $tid;
+		$response->action=$action;
+		$response->week_nb = $week_nb;
+		$response->timestamp = $timestamp;
+		$response->succes = $succes;
+		return $response;
+	}
 }
 
 function loadTeacherCalendar($tid, $week_nb){
@@ -34,21 +45,9 @@ function loadTeacherCalendar($tid, $week_nb){
 	$response->operation_data = getUserOperations($tid, $week_nb);
 	$response->succes = true;
 	$response->error = null;
+	$response->infos = null;
 
 	return $response;
-}
-
-function getUserWeekStamp($uid, $week_nb){
-	$sql = "select * from weekly_action_stamp where stamp_uid=$uid and stamp_week_nb=$week_nb";
-
-	$stamp_time = dbGetObjByQuery($sql, function($row){
-		return $row["stamp_time"];
-	});
-
-	if($stamp_time==null){
-		$stamp_time = getDateZeroStr();
-	}
-	return $stamp_time;
 }
 
 function getUserReservations($uid, $week_nb){
@@ -112,4 +111,25 @@ function defaultWeekCalendar($week_nb){
 	}
 	return $calendar;
 }
+
+/**** function week stamp *****/
+function getUserWeekStamp($uid, $week_nb){
+	$sql = "select * from weekly_action_stamp where stamp_uid=$uid and stamp_week_nb=$week_nb";
+
+	$stamp_time = dbGetObjByQuery($sql, function($row){
+		return $row["stamp_time"];
+	});
+
+	if($stamp_time==null){
+		$stamp_time = getDateZeroStr();
+	}
+	return $stamp_time;
+}
+
+function checkChange($uid, $week_nb, $demand_timestamp){
+	return getUserWeekStamp($uid, $week_nb)>$demand_timestamp;
+}
+
+//"insert into weekly_action_stamp(stamp_uid, stamp_week_nb) value(1, 1) ON DUPLICATE KEY UPDATE stamp_time=CURRENT_TIMESTAMP"
+/************************/
 

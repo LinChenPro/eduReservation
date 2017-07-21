@@ -28,7 +28,6 @@ query("insert into teacher_categ(tc_tid,tc_categ_id,tc_expire_time) values(1, 4,
 query("insert into teacher_prise(tp_tid,tp_categ_id,tp_prise,tp_effective_time) values(1, 1, 1500, '2017-07-10')");
 query("insert into teacher_prise(tp_tid,tp_categ_id,tp_prise) values(1, 1, 1600)");
 
-*/
 
 
 query(
@@ -42,6 +41,7 @@ query(
 	."'100101101001100101101001100101101001100101101001')"
 );
 
+*/
 
 
 

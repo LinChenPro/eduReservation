@@ -31,10 +31,11 @@ function dateToWeekNb($date){
 	return dayNbToWeekNb(dateToDayNb($date));
 }
 
+/** /
 function intdiv($a, $b){
 		return ($a-($a%$b))/$b;
 }
-
+/*/
 // day_nb to week_nb
 function dayNbToWeekNb($day_nb){
 	return intdiv($day_nb, 7);
@@ -76,6 +77,11 @@ function hNbToTime($h_nb){
 	$minute = ($h_nb%2)*30;
 	return sprintf("%'.02d",$hour).":".sprintf("%'.02d",$minute);
 }
+
+
+/*
+*/
+
 
 /*
 echo hNbToCreneax(0)."<br>";

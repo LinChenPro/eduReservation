@@ -28,7 +28,7 @@ $user = dbFindByKey("User", $uid);
 var uid=<?=$uid?>;
 var demandeUrl = "/teacher_calendar_treate.php"
 var week_nb = null;
-
+var data_stamp = null;
 var queryLoad = null;
 var queryUpdate = null;
 var queryRefresh = null;
@@ -45,7 +45,7 @@ function abortRefreshAjax(){
 
 function sentTCDemand(d1, t1, d2, t2){
 	if(checkMultyAjax()){
-		var demande = { 'action' : "update", 'uid' : uid, 'week_nb' : week_nb, 'd1': d1,'t1' : t1,'d2' : d2,'t2' : t2 };
+		var demande = { 'action' : "<?=TCA_TYPE_UPDATE?>", 'uid' : uid, 'week_nb' : week_nb, 'd1': d1,'t1' : t1,'d2' : d2,'t2' : t2 };
 		queryUpdate = $.post(demandeUrl, demande, treateUpdateResponse, "json");
 	}
 }
@@ -56,7 +56,7 @@ function loadTCData(demande_week_nb){
 			week_nb = demande_week_nb;
 		}
 		send_week_nb = demande_week_nb==null?week_nb:demande_week_nb;
-		var demande = { 'action' : "load", 'uid' : uid, 'week_nb' : send_week_nb};
+		var demande = { 'action' : "<?=TCA_TYPE_LOAD?>", 'uid' : uid, 'week_nb' : send_week_nb};
 
 		queryLoad = $.post(demandeUrl, demande, treateLoadResponse, "json");
 	}	
@@ -64,36 +64,37 @@ function loadTCData(demande_week_nb){
 
 function autoTCRefresh(){
 	if(checkMultyAjax()){
-		var demande = { 'action' : "refresh", 'uid' : uid, 'week_nb' : week_nb};
+		var demande = { 'action' : "<?=TCA_TYPE_REFRESH?>", 'uid' : uid, 'week_nb' : week_nb, 'timestamp' : data_stamp};
 		queryRefresh = $.post(demandeUrl, demande, treateRefreshResponse, "json");
 	}
 }
 
 function treateUpdateResponse(responseData){
-	week_nb = responseData["week_nb"];
 	showScheduleData(responseData);
 	queryUpdate = null;
 	autoTCRefresh();
 }
 
 function treateLoadResponse(responseData){
-	week_nb = responseData["week_nb"];
 	showScheduleData(responseData);
 	queryLoad = null;
-//	autoTCRefresh();
+	autoTCRefresh();
 }
 
 function treateRefreshResponse(responseData){
-	if(responseData["week_nb"] == week_nb){
+	if(responseData["week_nb"] == week_nb && responseData["timestamp"]>data_stamp){
 		showScheduleData(responseData);
 	}
 	queryRefresh = null;
 	autoTCRefresh();
 }
 
-function showScheduleData(schedule){
-//	$("#showData").html(schedule.action+" week_nb="+schedule.week_nb);
-	$("#showData").html(JSON.stringify(schedule));
+function showScheduleData(responseData){
+	week_nb = responseData["week_nb"];
+	data_stamp = responseData["timestamp"];
+
+	$("#week_title").html(responseData.week_nb);
+	$("#showData").html(JSON.stringify(responseData));
 }
 
 $("#sendDemande").click(function(){
@@ -109,7 +110,6 @@ $("#week_next").click(function(){
 });
 
 loadTCData();
-//autoTCRefresh();
 
 </script>
 

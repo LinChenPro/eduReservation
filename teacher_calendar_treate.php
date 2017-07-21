@@ -17,24 +17,24 @@ $demand_uid = $_POST["uid"];
 $demand_week_nb = $_POST["week_nb"];
 $demand_timestamp = $_POST["timestamp"];
 */
-if($demand_action=="load"){
+if($demand_action==TCA_TYPE_LOAD){
 	if(empty($demand_week_nb)){
 		$demand_week_nb = dateToWeekNb();
 	}
-	$reponseObj = loadTeacherCalendar($uid, $demand_week_nb);
-	echo json_encode($reponseObj);
-}else if($demand_action=="update"){
-	$reponseObj->action = $demand_action;
-	$reponseObj->week_nb = $demand_week_nb;
-	$reponseObj->timestamp = "";
-	$reponseObj->schedule_data = array(1,2,3,4);
-	$reponseObj->succes = true;
-	$reponseObj->error = null;
-	echo json_encode($reponseObj);	
-}else if($demand_action=="refresh"){
+	$responseObj = loadTeacherCalendar($uid, $demand_week_nb);
+	echo json_encode($responseObj);
+}else if($demand_action==TCA_TYPE_UPDATE){
+	$responseObj->action = $demand_action;
+	$responseObj->week_nb = $demand_week_nb;
+	$responseObj->timestamp = "";
+	$responseObj->schedule_data = array(1,2,3,4);
+	$responseObj->succes = true;
+	$responseObj->error = null;
+	echo json_encode($responseObj);	
+}else if($demand_action==TCA_TYPE_REFRESH){
 	$has_change = false;
 	for($i=0; $i<10; $i++){
-		$has_change = false;//checkChange($demand_timestamp);
+		$has_change = checkChange($uid, $demand_week_nb, $demand_timestamp);
 		if($has_change){
 			break;
 		}
@@ -42,20 +42,19 @@ if($demand_action=="load"){
 	}
 
 	if($has_change){
-		$reponseObj->action = $demand_action;
-		$reponseObj->week_nb = $demand_week_nb;
-		$reponseObj->timestamp = "";
-		$reponseObj->schedule_data = array(1,2,3,4);
-		$reponseObj->succes = true;
-		$reponseObj->error = null;
-		echo json_encode($reponseObj);	
+		$responseObj = loadTeacherCalendar($uid, $demand_week_nb);
+		$responseObj->action = TCA_TYPE_REFRESH;
+		echo json_encode($responseObj);
 	}else{
-		$reponseObj->action = $demand_action;
-		$reponseObj->week_nb = $demand_week_nb;
-		$reponseObj->timestamp = $demand_week_nb;
-		$reponseObj->succes = true;
-		$reponseObj->error = null;
-		echo json_encode($reponseObj);	
+		$responseObj = TeacherCalendarResponse::newInstance(
+			$demand_uid, 
+			TCA_TYPE_REFRESH, 
+			$demand_week_nb, 
+			$demand_timestamp, 
+			true
+		);
+		$responseObj->infos = "not refreshed"; 
+		echo json_encode($responseObj);	
 	}
 }
 

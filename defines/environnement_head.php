@@ -1,5 +1,6 @@
 <?php
 error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
+//ini_set("display_errors", "on");
 ini_set("display_errors", "off");
 
 // require_once('outside_includes/libs.php');
