@@ -14,13 +14,14 @@ $user = dbFindByKey("User", $uid);
 
 
 <div id="week_head">
-	<a id="week_pre"> < </a>
+	<a id="week_pre" href="#"> last week </a>
 	<span id="week_title"></span>
-	<a id="week_next"> > </a>
+	<a id="week_next" href="#"> next week </a>
 </div>
 <div id="teacher_calendar_div" style="position:relative;">
 	<div id="res_ope_div"></div>
 	<div id="selection_div" style="z-index:1"></div>
+	<div id="res_poe_detail_div" style="z-index:101"></div>
 	<table id="cal_table" style="z-index:100;position:relative;">
 		<tr>
 			<th></th>
@@ -35,7 +36,7 @@ $user = dbFindByKey("User", $uid);
 <?php
 for($h=0; $h<48; $h++){
 ?>		
-		<tr id="caltr_<?=$h?>"><td id="cal_h_<?=$h?>"><?=hNbToCreneax($h)?></td></tr>
+		<tr id="caltr_<?=$h?>"><td class="cal_h" id="cal_h_<?=$h?>"><?=hNbToCreneax($h)?></td></tr>
 <?php
 }
 ?>		
@@ -56,19 +57,61 @@ var queryLoad = null;
 var queryUpdate = null;
 var queryRefresh = null;
 
+var crtSchedules
+var crtReservations
+var crtOperations
+
 var selection_begin = null;
 var selection_end = null;
+var isMouseDown = false;
+
+var crtDetalTD = null;
+
+$("body").mouseup(function(){
+	isMouseDown = false;
+	showSelection();
+});
+
+function initSelectionVars(){
+	selection_begin = null;
+	selection_end = null;
+	isMouseDown = false;
+	showSelection();
+}
+
 function select_begin(elm){
+	event.stopPropagation();
+
+	isMouseDown = true;
 	var obj = $(elm);
-	selection_begin = {day:obj.data("day"), h:obj.data("h")};
+	selection_begin = {day:obj.attr("data-day"), h:obj.attr("data-h")};
 	selection_end = selection_begin;
 	showSelection();
 }
 
+function select_continue(elm){
+	event.stopPropagation();
+	
+	if(isMouseDown){
+		var obj = $(elm);
+		selection_end = {day:obj.attr("data-day"), h:obj.attr("data-h")};
+		showSelection();
+	}else{
+	}
+}
+
 function select_end(elm){
-	var obj = $(elm);
-	selection_end = {day:obj.data("day"), h:obj.data("h")};
-	showSelection();
+	if(isMouseDown){
+		event.stopPropagation();
+		var obj = $(elm);
+		selection_end = {day:obj.attr("data-day"), h:obj.attr("data-h")};
+		isMouseDown = false;
+		showSelection();
+	}else{
+		selection_begin = null;
+		selection_end = null;
+		showSelection();
+	}
 }
 
 function showSelection(){
@@ -97,6 +140,75 @@ function showSelection(){
 	}
 }
 
+function showResOpeDetail(elm){
+	if(!isMouseDown){
+		event.stopPropagation();
+		var detail_div = $("#res_poe_detail_div");
+
+		var obj = $(elm);
+		var index = obj.attr("data-index");
+		if(index != null){
+			crtDetalTD = elm;
+
+			var htmlContent = "";
+			if(obj.attr("data-type").startsWith("res")){
+				htmlContent = getResDetailHtml(index);
+			}else{
+				htmlContent = getOpeDetailHtml(index);
+			}
+
+			var p_elm = obj.position();
+			detail_div
+			.css("left", p_elm.left+100)
+			.css("top", p_elm.top)
+			.html(htmlContent)
+			.show();
+		}
+	}
+}
+
+function hideResOpeDetail(elm){
+		event.stopPropagation();
+		var detail_div = $("#res_poe_detail_div");
+
+		var obj = $(elm);
+		var index = obj.attr("data-index");
+		if(crtDetalTD == elm){
+			detail_div.hide().html("");
+		}
+}
+
+function getResDetailHtml(index){
+	if(crtReservations == null || crtReservations.length<=index){
+		return "data not found";
+	}
+
+	var obj = crtReservations[index];
+	var code = "Categ : " + obj.categ_name+"<br>";
+	if(obj.sid==uid){
+		code += "Teacher : "+obj.t_name;
+	}else{
+		code += "Student : "+obj.s_name;
+	}
+	return code;
+}
+
+function getOpeDetailHtml(index){
+	if(crtOperations == null || crtOperations.length<=index){
+		return "data not found";
+	}
+
+	var obj = crtOperations[index];
+	var code = "Categ : " + obj.categ_name+"<br>";
+	if(obj.sid==uid){
+		code += "Teacher : "+obj.t_name+"<br>";
+	}else{
+		code += "Student : "+obj.s_name+"<br>";
+	}
+	code += "Statut : "+(obj.statut==0?"deleting...":"creating...")+"<br>";
+	return code;
+}
+
 function initPresentationElements(){
 	for(var h=0; h<48; h++){
 		var tds = "";
@@ -106,7 +218,12 @@ function initPresentationElements(){
 		$("#caltr_"+h).append(tds);
 	}
 
-	$(".cal_cell").mousedown(function(){select_begin(this)}).mouseup(function(){select_end(this)});
+	$(".cal_cell")
+	.mousedown(function(){select_begin(this)})
+	.mouseup(function(){select_end(this)})
+	.mousemove(function(){select_continue(this)})
+	.mouseover(function(){showResOpeDetail(this)})
+	.mouseout(function(){hideResOpeDetail(this)});
 }
 
 function checkMultyAjax(){
@@ -176,44 +293,49 @@ function showScheduleData(responseData){
 	week_first_day = responseData["week_first_day"];
 	data_stamp = responseData["timestamp"];
 
+	if(responseData["action"]=="<?=TCA_TYPE_LOAD?>"){
+		initSelectionVars();
+	}
+
 	// show schedule
-	var schedules = responseData["schedule_data"];
+	crtSchedules = responseData["schedule_data"];
 	for(var d=0; d<7; d++){
-		var schedule = schedules[d];
+		var schedule = crtSchedules[d];
 		$("#cal_d_"+d).html(schedule.day_str);
 
 		for(var h=0; h<48; h++){
 			$("#cal_"+d+"_"+h).attr("data-statut", schedule.day_status[h])
 			.attr("data-day", schedule.day_nb)
 			.attr("data-h", h)
+			.html(schedule.day_nb + " - " + h)
 			.attr("data-type", "");
 		}
 	}
 
 	// show reservations
-	var reservations = responseData["reservation_data"];
-	if(reservations != null){
-		for(var i=0; i<reservations.length; i++){
-			var reservation = reservations[i];
+	crtReservations = responseData["reservation_data"];
+	if(crtReservations != null){
+		for(var i=0; i<crtReservations.length; i++){
+			var reservation = crtReservations[i];
 			var d = reservation.day_nb - week_first_day;
 			var type = "res_"+(reservation.tid==uid?"t":"s");
 			for(var h=reservation.begin_nb; h<=reservation.end_nb; h++){
-				$("#cal_"+d+"_"+h).attr("data-type", type);
+				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
 			}
 		}
 	}
 
 	// show operations
-	var operations = responseData["operation_data"];
-	if(operations != null){
-		for(var i=0; i<operations.length; i++){
-			var operation = operations[i];
+	crtOperations = responseData["operation_data"];
+	if(crtOperations != null){
+		for(var i=0; i<crtOperations.length; i++){
+			var operation = crtOperations[i];
 			var d = operation.day_nb - week_first_day;
 			var type = "ope_";
 			type += (operation.tid==uid?"t":"s");
 			type += "_"+operation.statut;
 			for(var h=operation.begin_nb; h<=operation.end_nb; h++){
-				$("#cal_"+d+"_"+h).attr("data-type", type);
+				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
 			}
 		}
 	}
