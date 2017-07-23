@@ -1,6 +1,6 @@
 <?php
 define("TCA_TYPE_LOAD", "load");
-define("TCA_TYPE_UPDATE", "upload");
+define("TCA_TYPE_UPDATE", "update");
 define("TCA_TYPE_REFRESH", "refresh");
 
 class TeacherCalendarResponse{
@@ -33,6 +33,7 @@ function loadTeacherCalendar($tid, $week_nb){
 	$response->tid = $tid;
 	$response->action=TCA_TYPE_LOAD;
 	$response->week_nb = $week_nb;
+	$response->week_first_day = getWeekFirstDayNb($week_nb);
 	$response->timestamp = getUserWeekStamp($tid, $week_nb);
 	$response->schedule_data = getTeacherCalendar($tid, $week_nb);
 	$response->reservation_data = getUserReservations($tid, $week_nb);
@@ -43,6 +44,60 @@ function loadTeacherCalendar($tid, $week_nb){
 
 	return $response;
 }
+
+function updateTeacherCalendar(
+	$uid, 
+	$week_nb, 
+	$from_day,
+	$from_h,
+	$to_day,
+	$to_h,
+	$to_statut
+){
+	// get current data:
+	$currentCalendar = loadTeacherCalendar($uid, $week_nb);
+
+	// set value to_statut
+	$week_first_day = $currentCalendar->week_first_day;
+	$from_day_i = $from_day - $week_first_day;
+	$to_day_i = $to_day - $week_first_day;
+	for($d = $from_day_i; $d<=$to_day_i; $d++){
+		for($h = $from_h; $h<=$to_h; $h++){
+			$currentCalendar->schedule_data[$d]->day_status[$h] = $to_statut;
+		}
+	}
+
+	// replace by reservations and operations
+	if($to_statut==TCA_STATUT_OCCUPIED){
+		$reservations = $currentCalendar->reservation_data;
+		if(!empty($reservations))
+		foreach ($reservations as $reservation) {
+			if($reservation->tid==$uid){
+				$d = $reservation->day_nb-$week_first_day;
+				for($h = $reservation->begin_nb; $h<=$reservation->end_nb; $h++){
+					$currentCalendar->schedule_data[$d]->day_status[$h] = TCA_STATUT_AVAILABLE;
+				}
+			}
+		}
+
+		$operations = $currentCalendar->operation_data;
+		if(!empty($operations))
+		foreach ($operations as $operation) {
+			if($operation->tid==$uid){
+				$d = $operation->day_nb-$week_first_day;
+				for($h = $operation->begin_nb; $h<=$operation->end_nb; $h++){
+					$currentCalendar->schedule_data[$d]->day_status[$h] = TCA_STATUT_AVAILABLE;
+				}
+			}
+		}
+	}
+
+	updateCalendarsToDb($uid, $week_nb, $currentCalendar->schedule_data);
+	$currentCalendar->timestamp = getUserWeekStamp($uid, $week_nb);
+
+	return $currentCalendar;
+}
+
 /* ------------------------------------------------------ */
 define("RES_STATUT_CREATED", 1);
 define("RES_STATUT_DELETING", 2);
@@ -68,8 +123,10 @@ class Reservation{
 function getUserReservations($uid, $week_nb){
 	$sql = "select reservation.*, t.user_name as t_name, s.user_name as s_name, c.categ_name as categ_name "
 		."from reservation, users as t, users as s, categories as c "
-		."where t.user_id=res_tid and s.user_id=res_sid and c.categ_id=res_categ_id and res_statut in(1,4,5,6) "
-		."and 1 in(res_tid, res_sid)";
+		."where t.user_id=res_tid and s.user_id=res_sid and c.categ_id=res_categ_id "
+		."and res_week_nb=$week_nb "
+		."and res_statut in(1,4,5,6) "
+		."and $uid in(res_tid, res_sid)";
 
 	$reservationArr = dbGetObjsByQuery($sql, function($row){
 		$reservation = new Reservation();
@@ -92,10 +149,60 @@ function getUserReservations($uid, $week_nb){
 }
 
 /* --------------------------------------------------------------- */
-function getUserOperations($uid, $week_nb){
-	return null;
+define("OPE_STATUT_TOCREATE", 1);
+define("OPE_STATUT_TODELETE", 0);
+
+class Operation{
+	public $ope_id;
+	public $res_id;
+	public $tid;
+	public $t_name;
+	public $sid;
+	public $s_name;
+	public $categ_id;
+	public $categ_name;
+	public $day_nb;
+	public $begin_nb;
+	public $end_nb;
+	public $statut;
 }
+
+
+
+function getUserOperations($uid, $week_nb){
+	$sql = "select student_operation.*, t.user_name as t_name, s.user_id as sid, s.user_name as s_name, c.categ_name as categ_name "
+		."from student_operation, student_session, users as t, users as s, categories as c "
+		."where ope_session_id=session_id and session_expire_time>=CURRENT_TIMESTAMP "
+		."and t.user_id=ope_tid and s.user_id=session_sid and c.categ_id=ope_categ_id "
+		."and ope_week_nb=$week_nb "
+		."and $uid in(ope_tid, session_sid)";
+
+	$operationArr = dbGetObjsByQuery($sql, function($row){
+		$operation = new Operation();
+		$operation->ope_id = $row["ope_id"];
+		$operation->res_id = $row["ope_res_id"];
+		$operation->tid = $row["ope_tid"];
+		$operation->t_name = $row["t_name"];
+		$operation->sid = $row["sid"];
+		$operation->s_name = $row["s_name"];
+		$operation->categ_id = $row["ope_categ_id"];
+		$operation->categ_name = $row["categ_name"];
+		$operation->day_nb = $row["ope_day_nb"];
+		$operation->begin_nb = $row["ope_begin_nb"];
+		$operation->end_nb = $row["ope_end_nb"];
+		$operation->statut = $row["ope_statut"];
+		return $operation;
+	});
+
+	return $operationArr;
+
+}
+
 /* ---------------------------------------------------------------- */
+define("TCA_STATUT_AVAILABLE", 1);
+define("TCA_STATUT_OCCUPIED", 0);
+
+
 class DayCalendar{
 	public $day_nb;
 	public $day_str;
@@ -128,6 +235,11 @@ function getTeacherCalendar($tid, $week_nb){
 	return $dayCalendarArr;
 }
 
+
+function calendarArrayToString($arr){
+	return implode($arr);
+}
+
 function calendarStringToArray($str){
 	if(!empty($str)){
 		$arr = str_split($str);
@@ -156,6 +268,23 @@ function defaultWeekCalendar($week_nb){
 	return $calendar;
 }
 
+function updateCalendarsToDb($tid, $week_nb, $schedule_data){
+	$slot_0 = calendarArrayToString($schedule_data[0]->day_status);
+	$slot_1 = calendarArrayToString($schedule_data[1]->day_status);
+	$slot_2 = calendarArrayToString($schedule_data[2]->day_status);
+	$slot_3 = calendarArrayToString($schedule_data[3]->day_status);
+	$slot_4 = calendarArrayToString($schedule_data[4]->day_status);
+	$slot_5 = calendarArrayToString($schedule_data[5]->day_status);
+	$slot_6 = calendarArrayToString($schedule_data[6]->day_status);
+      
+	$sql = "insert into teacher_schedule(ts_tid, ts_week_nb, ts_slot_0, ts_slot_1, ts_slot_2, ts_slot_3, ts_slot_4, ts_slot_5, ts_slot_6) ";
+	$sql .= "values($tid, $week_nb, '$slot_0', '$slot_1', '$slot_2', '$slot_3', '$slot_4', '$slot_5', '$slot_6') ";
+	$sql .= "ON DUPLICATE KEY UPDATE ts_slot_0='$slot_0', ts_slot_1='$slot_1', ts_slot_2='$slot_2', ts_slot_3='$slot_3', ts_slot_4='$slot_4', ts_slot_5='$slot_5', ts_slot_6='$slot_6'";
+	query($sql);
+
+	updateUserWeekStamp($tid, $week_nb);
+}
+
 /**** function week stamp *****/
 function getUserWeekStamp($uid, $week_nb){
 	$sql = "select * from weekly_action_stamp where stamp_uid=$uid and stamp_week_nb=$week_nb";
@@ -174,6 +303,10 @@ function checkChange($uid, $week_nb, $demand_timestamp){
 	return getUserWeekStamp($uid, $week_nb)>$demand_timestamp;
 }
 
-//"insert into weekly_action_stamp(stamp_uid, stamp_week_nb) value(1, 1) ON DUPLICATE KEY UPDATE stamp_time=CURRENT_TIMESTAMP"
+function updateUserWeekStamp($uid, $week_nb){
+	$sql = "insert into weekly_action_stamp(stamp_uid, stamp_week_nb) value($uid, $week_nb) ON DUPLICATE KEY UPDATE stamp_time=CURRENT_TIMESTAMP";
+	query($sql);
+}
+
 /************************/
 

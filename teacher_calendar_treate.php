@@ -17,20 +17,32 @@ $demand_uid = $_POST["uid"];
 $demand_week_nb = $_POST["week_nb"];
 $demand_timestamp = $_POST["timestamp"];
 */
+
 if($demand_action==TCA_TYPE_LOAD){
-	if(empty($demand_week_nb)){
+	if(empty($demand_week_nb) || $demand_week_nb<=0){
 		$demand_week_nb = dateToWeekNb();
 	}
 	$responseObj = loadTeacherCalendar($uid, $demand_week_nb);
 	echo json_encode($responseObj);
 }else if($demand_action==TCA_TYPE_UPDATE){
-	$responseObj->action = $demand_action;
-	$responseObj->week_nb = $demand_week_nb;
-	$responseObj->timestamp = "";
-	$responseObj->schedule_data = array(1,2,3,4);
-	$responseObj->succes = true;
-	$responseObj->error = null;
-	echo json_encode($responseObj);	
+		$demand_from_day = $_REQUEST["from_day"];
+		$demand_from_h = $_REQUEST["from_h"];
+		$demand_to_day = $_REQUEST["to_day"];
+		$demand_to_h = $_REQUEST["to_h"];
+		$demand_to_statut = $_REQUEST["to_statut"]-0;
+
+		$responseObj = updateTeacherCalendar(
+			$uid, 
+			$demand_week_nb, 
+			$demand_from_day,
+			$demand_from_h,
+			$demand_to_day,
+			$demand_to_h,
+			$demand_to_statut
+		);
+
+		$responseObj->action = TCA_TYPE_UPDATE;
+		echo json_encode($responseObj);
 }else if($demand_action==TCA_TYPE_REFRESH){
 	$has_change = false;
 	for($i=0; $i<10; $i++){

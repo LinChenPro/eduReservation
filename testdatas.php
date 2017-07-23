@@ -48,6 +48,18 @@ query("insert into reservation(res_tid,res_sid,res_categ_id,res_tp_id,res_week_n
 
 */
 
+$tid = 1; $sid = 2; $categ_id = 2; $tp_id = 1;
+
+$week_nb = 2; $day_nb = 17; $begin_nb = 18; $end_nb = 19; 
+$statut = OPE_STATUT_TOCREATE;
+addOperation($tid, $sid, $categ_id, $tp_id, $week_nb, $day_nb, $begin_nb, $end_nb, $statut);
+
+$week_nb = 2; $day_nb = 18; $begin_nb = 25; $end_nb = 26; 
+$statut = OPE_STATUT_TODELETE;
+addOperation($tid, $sid, $categ_id, $tp_id, $week_nb, $day_nb, $begin_nb, $end_nb, $statut);
+
+
+
 
 
 

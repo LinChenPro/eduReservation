@@ -17,3 +17,8 @@ function echoln($s){
 	echo $s;
 	echo "<br>\n";
 }
+
+
+function TODO($command){
+//	echoln($command);
+}

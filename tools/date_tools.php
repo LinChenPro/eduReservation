@@ -62,7 +62,7 @@ function dayNbToStr($day_nb, $format=DAY_FORMAT){
 }
 
 // get string hh:mm - hh:mm
-function hNbToCreneax($h_from, $h_to){
+function hNbToCreneax($h_from, $h_to=null){
 	if($h_to==null){
 		$h_to = $h_from;
 	}

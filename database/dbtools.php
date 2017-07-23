@@ -18,6 +18,16 @@ function query($sql){
 	return $res;
 }
 
+function insertQuery($sql){
+	global $conn;
+	$res = $conn->query($sql);
+
+	if(!$res===TRUE){
+		echo  $conn->error;
+	}
+	return $conn->insert_id;
+}
+
 function getClauseStr($whereClauses){
 	return concat(" where ", " and ", ...$whereClauses);
 }

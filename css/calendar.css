@@ -1,0 +1,55 @@
+#cal_table, #selection_div{
+	border-collapse: collapse;
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    cursor: default;
+}
+
+#selection_div{
+	position:absolute;
+	border:5px solid green;
+	box-sizing: border-box;
+}
+
+#cal_table td, #cal_table th{
+	border:1px solid black;
+	height:15px;
+	width:100px;
+}
+
+.cal_cell{
+	opacity:0.7;
+	background-color:#FFF;
+}
+
+.cal_cell[data-statut="0"]{
+	background-color:#DDD;
+}
+
+
+.cal_cell[data-type="res_t"]{
+	background-color:#BBF !important;
+}
+.cal_cell[data-type="ope_t_1"]{
+	background-color:#CCF !important;
+}
+.cal_cell[data-type="ope_t_0"]{
+	background-color:#DDF !important;
+}
+
+
+.cal_cell[data-type="res_s"]{
+	background-color:#FBB !important;
+}
+.cal_cell[data-type="ope_s_1"]{
+	background-color:#FCC !important;
+}
+.cal_cell[data-type="ope_s_0"]{
+	background-color:#FDD !important;
+}
+

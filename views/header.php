@@ -5,6 +5,7 @@
 <html>
 	<head>
 		<title><?=getCrtPageTitle()?></title>
+		<link rel="stylesheet" type="text/css" href="/css/calendar.css" />
 	</head>
 	<body>
 
