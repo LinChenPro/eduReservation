@@ -20,19 +20,38 @@ $page_infos = array(
 	"teacher_calendar" => array(
 		'title' => "teacher's calendar", 
 		'file' => "teacher_calendar.php",
+		'css' => array("/css/calendar.css"),
 		'type' => "html"
 	),
 	"teacher_calendar_treate" => array(
 		'title' => "teacher's calendar", 
 		'file' => "teacher_calendar_treate.php",
 		'type' => "ajax"
+	),
+	"student_booking" => array(
+		'title' => "select your lessons", 
+		'file' => "student_booking.php",
+		'css' => array("/css/booking.css"),
+		'type' => "html"
+	),
+	"student_booking_treate" => array(
+		'title' => "select your lessons", 
+		'file' => "student_booking_treate.php",
+		'type' => "ajax"
 	)
 );
+
 
 function getCrtPageTitle(){
 	global $page_infos;
 	global $page_name;
 	return $page_infos[$page_name]["title"];
+}
+
+function getCrtPageCss(){
+	global $page_infos;
+	global $page_name;
+	return $page_infos[$page_name]["css"];
 }
 
 function showAllPageLinks(){

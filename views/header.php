@@ -5,10 +5,21 @@
 <html>
 	<head>
 		<title><?=getCrtPageTitle()?></title>
-		<link rel="stylesheet" type="text/css" href="/css/calendar.css" />
+<?php
+$css_arr = getCrtPageCss();
+if(!empty($css_arr)){
+	foreach ($css_arr as $css_link) {
+?>
+		<link rel="stylesheet" type="text/css" href="<?=$css_link?>" />
+<?php
+	}
+}
+?>
+
+
 	</head>
 	<body>
 
-	<div style="position:absolute;right: 50px;">
+	<div style="position:absolute;right: 50px;z-index: 200;">
 		<?=showAllPageLinks()?>
 	</div>

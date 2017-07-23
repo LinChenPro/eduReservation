@@ -75,6 +75,7 @@ CREATE TABLE `student_session` (
   `session_sid` int(6) unsigned NOT NULL,
   `session_expire_time` datetime NOT NULL,
   `session_create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `session_statut` tinyint(1),
   PRIMARY KEY (`session_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -85,6 +86,7 @@ CREATE TABLE `student_operation` (
   `ope_tid` int(6) unsigned NOT NULL,
   `ope_categ_id` int(6) unsigned NOT NULL,
   `ope_tp_id` int(6) unsigned NOT NULL,
+  `ope_pur_id` int(6) unsigned,
   `ope_week_nb` int unsigned NOT NULL,
   `ope_day_nb` int unsigned NOT NULL,
   `ope_begin_nb` int unsigned NOT NULL,
@@ -99,6 +101,7 @@ CREATE TABLE `reservation` (
   `res_tid` int(6) unsigned NOT NULL,
   `res_sid` int(6) unsigned NOT NULL,
   `res_categ_id` int(6) unsigned NOT NULL,
+  `res_pur_id` int(6) unsigned,
   `res_tp_id` int(6) unsigned NOT NULL,
   `res_week_nb` int unsigned NOT NULL,
   `res_day_nb` int unsigned NOT NULL,
