@@ -13,6 +13,7 @@ if($currentSession->session_statut!=SESSION_STATUT_INOPERATION){
 ?>
 
 <script src="/js/jquery-3.2.1.min.js"></script>
+<script src="/js/ajax_query_manage.js"></script>
 
 <div> 
 	student : <?=$user->user_name?>
@@ -100,6 +101,7 @@ var crtDetalTD = null; // td whose elm detail info shows in a div float
 
 
 // list of request
+/*
 var queryLoad = null;
 var queryUpdate = null; 		// *- replaced by the new querys 
 var queryNewSelection = null;	// *+
@@ -109,72 +111,70 @@ var queryMove = null; 			// *+ ?need?
 
 var queryRefresh = null;
 var queryGetTeacherLists = null;	// *+
+*/
+
+// ajax query objects
+var queryLoad = new AjaxQuery("queryLoad", showScheduleData, autoTCRefresh, demandeUrl);
+var queryUpdate = new AjaxQuery("queryUpdate", showScheduleData, autoTCRefresh, demandeUrl);
+var queryRefresh = new AjaxQuery("queryRefresh", showScheduleData, autoTCRefresh, demandeUrl, true);
+
+// ajax request type constants
+var TCA_TYPE_UPDATE = "<?=TCA_TYPE_UPDATE?>";
+var TCA_TYPE_LOAD = "<?=TCA_TYPE_LOAD?>";
+var TCA_TYPE_REFRESH = "<?=TCA_TYPE_REFRESH?>";
 
 /************* ajax **************/
 
-function checkMultyAjax(){
-	return (queryLoad == null && queryUpdate == null);
-}
-
-function abortRefreshAjax(){
-	if(queryRefresh != null){
-		queryRefresh.abort();
-	}
-}
 
 function sentTCDemand(d1, t1, d2, t2, to_statut){
-	if(checkMultyAjax()){
-		abortRefreshAjax();
-
-		var demande = { 'action' : "<?=TCA_TYPE_UPDATE?>", 'uid' : uid, 'week_nb' : week_nb, 'from_day': d1,'from_h' : t1,'to_day' : d2,'to_h' : t2, 'to_statut': to_statut };
-		queryUpdate = $.post(demandeUrl, demande, treateUpdateResponse, "json");
-	}
+	var demande = { 
+		'action' : TCA_TYPE_UPDATE, 
+		'uid' : uid, 
+		'week_nb' : week_nb, 
+		'from_day': d1,
+		'from_h' : t1,
+		'to_day' : d2,
+		'to_h' : t2, 
+		'to_statut': to_statut 
+	};
+	queryUpdate.sendAjaxQuery(demande);
 }
 
 function loadTCData(demande_week_nb){
-	if(checkMultyAjax()){
-		abortRefreshAjax();
+	if(demande_week_nb!=null){
+		week_nb = demande_week_nb;
+	}
+	send_week_nb = demande_week_nb==null?week_nb:demande_week_nb;
+	var demande = { 
+		'action' : TCA_TYPE_LOAD, 
+		'uid' : uid, 
+		'week_nb' : send_week_nb
+	};
 
-		if(demande_week_nb!=null){
-			week_nb = demande_week_nb;
-		}
-		send_week_nb = demande_week_nb==null?week_nb:demande_week_nb;
-		var demande = { 'action' : "<?=TCA_TYPE_LOAD?>", 'uid' : uid, 'week_nb' : send_week_nb};
+	queryLoad.sendAjaxQuery(demande);
 
-		queryLoad = $.post(demandeUrl, demande, treateLoadResponse, "json");
-	}	
 }
 
 function autoTCRefresh(){
-	if(checkMultyAjax()){
-		abortRefreshAjax();
-
-		var demande = { 'action' : "<?=TCA_TYPE_REFRESH?>", 'uid' : uid, 'week_nb' : week_nb, 'timestamp' : data_stamp};
-		queryRefresh = $.post(demandeUrl, demande, treateRefreshResponse, "json");
-	}
+	var demande = { 
+		'action' : TCA_TYPE_REFRESH, 
+		'uid' : uid, 
+		'week_nb' : week_nb, 
+		'timestamp' : data_stamp
+	};
+	queryRefresh.sendAjaxQuery(demande);
 }
 
-function treateUpdateResponse(responseData){
-	showScheduleData(responseData);
-	queryUpdate = null;
-	autoTCRefresh();
-}
 
-function treateLoadResponse(responseData){
-	showScheduleData(responseData);
-	queryLoad = null;
-	autoTCRefresh();
-}
-
-function treateRefreshResponse(responseData){
-	if(responseData["week_nb"] == week_nb && responseData["timestamp"]>data_stamp){
-		showScheduleData(responseData);
-	}
-	queryRefresh = null;
-	autoTCRefresh();
-}
 
 function showScheduleData(responseData){
+	// do not show unchanged refresh result
+	if(responseData["action"]==TCA_TYPE_REFRESH){
+		if(!(responseData["week_nb"] == week_nb && responseData["timestamp"]>data_stamp)){
+			return;
+		}
+	}
+
 	week_nb = responseData["week_nb"];
 	week_first_day = responseData["week_first_day"];
 	data_stamp = responseData["timestamp"];

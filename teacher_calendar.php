@@ -9,6 +9,7 @@ $user = dbFindByKey("User", $uid);
 ?>
 
 <script src="/js/jquery-3.2.1.min.js"></script>
+<script src="/js/ajax_query_manage.js"></script>
 
 <div> teacher : <?=$user->user_name?></div>
 
@@ -48,25 +49,147 @@ for($h=0; $h<48; $h++){
 
 
 <script type="text/javascript">
-var uid=<?=$uid?>;
+/************  param js:  **************/
 var demandeUrl = "/teacher_calendar_treate.php"
+
+// datas
+var uid=<?=$uid?>;
 var week_nb = null;
 var week_first_day = null;
 var data_stamp = null;
-var queryLoad = null;
-var queryUpdate = null;
-var queryRefresh = null;
-
-var crtSchedules
-var crtReservations
-var crtOperations
+var crtSchedules = null;
+var crtReservations = null;
+var crtOperations = null;
 
 var selection_begin = null;
 var selection_end = null;
 var isMouseDown = false;
 
-var crtDetalTD = null;
+var crtDetalTD = null; // td whose elm detail info shows in a div float
 
+// ajax query objects
+var queryLoad = new AjaxQuery("queryLoad", showScheduleData, autoTCRefresh, demandeUrl);
+var queryUpdate = new AjaxQuery("queryUpdate", showScheduleData, autoTCRefresh, demandeUrl);
+var queryRefresh = new AjaxQuery("queryRefresh", showScheduleData, autoTCRefresh, demandeUrl, true);
+
+// ajax request type constants
+var TCA_TYPE_UPDATE = "<?=TCA_TYPE_UPDATE?>";
+var TCA_TYPE_LOAD = "<?=TCA_TYPE_LOAD?>";
+var TCA_TYPE_REFRESH = "<?=TCA_TYPE_REFRESH?>";
+
+/************* ajax **************/
+
+
+function sentTCDemand(d1, t1, d2, t2, to_statut){
+	var demande = { 
+		'action' : TCA_TYPE_UPDATE, 
+		'uid' : uid, 
+		'week_nb' : week_nb, 
+		'from_day': d1,
+		'from_h' : t1,
+		'to_day' : d2,
+		'to_h' : t2, 
+		'to_statut': to_statut 
+	};
+	queryUpdate.sendAjaxQuery(demande);
+}
+
+function loadTCData(demande_week_nb){
+	if(demande_week_nb!=null){
+		week_nb = demande_week_nb;
+	}
+	send_week_nb = demande_week_nb==null?week_nb:demande_week_nb;
+	var demande = { 
+		'action' : TCA_TYPE_LOAD, 
+		'uid' : uid, 
+		'week_nb' : send_week_nb
+	};
+
+	queryLoad.sendAjaxQuery(demande);
+
+}
+
+function autoTCRefresh(){
+	var demande = { 
+		'action' : TCA_TYPE_REFRESH, 
+		'uid' : uid, 
+		'week_nb' : week_nb, 
+		'timestamp' : data_stamp
+	};
+	queryRefresh.sendAjaxQuery(demande);
+}
+
+
+
+function showScheduleData(responseData){
+	// do not show unchanged refresh result
+	if(responseData["action"]==TCA_TYPE_REFRESH){
+		if(!(responseData["week_nb"] == week_nb && responseData["timestamp"]>data_stamp)){
+			return;
+		}
+	}
+
+	week_nb = responseData["week_nb"];
+	week_first_day = responseData["week_first_day"];
+	data_stamp = responseData["timestamp"];
+
+	if(responseData["action"]=="<?=TCA_TYPE_LOAD?>"){
+		initSelectionVars();
+	}
+
+	// show schedule
+	crtSchedules = responseData["schedule_data"];
+	for(var d=0; d<7; d++){
+		var schedule = crtSchedules[d];
+		$("#cal_d_"+d).html(schedule.day_str);
+
+		for(var h=0; h<48; h++){
+			$("#cal_"+d+"_"+h).attr("data-statut", schedule.day_status[h])
+			.attr("data-day", schedule.day_nb)
+			.attr("data-h", h)
+			.html(schedule.day_nb + " - " + h)
+			.attr("data-type", "");
+		}
+	}
+
+	// show reservations
+	crtReservations = responseData["reservation_data"];
+	if(crtReservations != null){
+		for(var i=0; i<crtReservations.length; i++){
+			var reservation = crtReservations[i];
+			var d = reservation.day_nb - week_first_day;
+			var type = "res_"+(reservation.tid==uid?"t":"s");
+			for(var h=reservation.begin_nb; h<=reservation.end_nb; h++){
+				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
+			}
+		}
+	}
+
+	// show operations
+	crtOperations = responseData["operation_data"];
+	if(crtOperations != null){
+		for(var i=0; i<crtOperations.length; i++){
+			var operation = crtOperations[i];
+			var d = operation.day_nb - week_first_day;
+			var type = "ope_";
+			type += (operation.tid==uid?"t":"s");
+			type += "_"+operation.statut;
+			for(var h=operation.begin_nb; h<=operation.end_nb; h++){
+				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
+			}
+		}
+	}
+
+	$("#week_title").html(responseData.week_nb);
+	$("#showData").html(JSON.stringify(responseData));
+}
+
+
+
+
+
+
+/**************     presentation, element reactions     **************/
 $("body").mouseup(function(){
 	isMouseDown = false;
 	showSelection();
@@ -226,124 +349,10 @@ function initPresentationElements(){
 	.mouseout(function(){hideResOpeDetail(this)});
 }
 
-function checkMultyAjax(){
-	return (queryLoad == null && queryUpdate == null);
-}
 
-function abortRefreshAjax(){
-	if(queryRefresh != null){
-		queryRefresh.abort();
-	}
-}
 
-function sentTCDemand(d1, t1, d2, t2, to_statut){
-	if(checkMultyAjax()){
-		abortRefreshAjax();
 
-		var demande = { 'action' : "<?=TCA_TYPE_UPDATE?>", 'uid' : uid, 'week_nb' : week_nb, 'from_day': d1,'from_h' : t1,'to_day' : d2,'to_h' : t2, 'to_statut': to_statut };
-		queryUpdate = $.post(demandeUrl, demande, treateUpdateResponse, "json");
-	}
-}
-
-function loadTCData(demande_week_nb){
-	if(checkMultyAjax()){
-		abortRefreshAjax();
-
-		if(demande_week_nb!=null){
-			week_nb = demande_week_nb;
-		}
-		send_week_nb = demande_week_nb==null?week_nb:demande_week_nb;
-		var demande = { 'action' : "<?=TCA_TYPE_LOAD?>", 'uid' : uid, 'week_nb' : send_week_nb};
-
-		queryLoad = $.post(demandeUrl, demande, treateLoadResponse, "json");
-	}	
-}
-
-function autoTCRefresh(){
-	if(checkMultyAjax()){
-		abortRefreshAjax();
-
-		var demande = { 'action' : "<?=TCA_TYPE_REFRESH?>", 'uid' : uid, 'week_nb' : week_nb, 'timestamp' : data_stamp};
-		queryRefresh = $.post(demandeUrl, demande, treateRefreshResponse, "json");
-	}
-}
-
-function treateUpdateResponse(responseData){
-	showScheduleData(responseData);
-	queryUpdate = null;
-	autoTCRefresh();
-}
-
-function treateLoadResponse(responseData){
-	showScheduleData(responseData);
-	queryLoad = null;
-	autoTCRefresh();
-}
-
-function treateRefreshResponse(responseData){
-	if(responseData["week_nb"] == week_nb && responseData["timestamp"]>data_stamp){
-		showScheduleData(responseData);
-	}
-	queryRefresh = null;
-	autoTCRefresh();
-}
-
-function showScheduleData(responseData){
-	week_nb = responseData["week_nb"];
-	week_first_day = responseData["week_first_day"];
-	data_stamp = responseData["timestamp"];
-
-	if(responseData["action"]=="<?=TCA_TYPE_LOAD?>"){
-		initSelectionVars();
-	}
-
-	// show schedule
-	crtSchedules = responseData["schedule_data"];
-	for(var d=0; d<7; d++){
-		var schedule = crtSchedules[d];
-		$("#cal_d_"+d).html(schedule.day_str);
-
-		for(var h=0; h<48; h++){
-			$("#cal_"+d+"_"+h).attr("data-statut", schedule.day_status[h])
-			.attr("data-day", schedule.day_nb)
-			.attr("data-h", h)
-			.html(schedule.day_nb + " - " + h)
-			.attr("data-type", "");
-		}
-	}
-
-	// show reservations
-	crtReservations = responseData["reservation_data"];
-	if(crtReservations != null){
-		for(var i=0; i<crtReservations.length; i++){
-			var reservation = crtReservations[i];
-			var d = reservation.day_nb - week_first_day;
-			var type = "res_"+(reservation.tid==uid?"t":"s");
-			for(var h=reservation.begin_nb; h<=reservation.end_nb; h++){
-				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
-			}
-		}
-	}
-
-	// show operations
-	crtOperations = responseData["operation_data"];
-	if(crtOperations != null){
-		for(var i=0; i<crtOperations.length; i++){
-			var operation = crtOperations[i];
-			var d = operation.day_nb - week_first_day;
-			var type = "ope_";
-			type += (operation.tid==uid?"t":"s");
-			type += "_"+operation.statut;
-			for(var h=operation.begin_nb; h<=operation.end_nb; h++){
-				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
-			}
-		}
-	}
-
-	$("#week_title").html(responseData.week_nb);
-	$("#showData").html(JSON.stringify(responseData));
-}
-
+/**********  element reaction definitions *********/
 $("#sendSelect").click(function(){
 	if(selection_begin!=null && selection_end!=null){
 		var d_min = Math.min(selection_begin.day, selection_end.day);
