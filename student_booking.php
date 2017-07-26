@@ -70,7 +70,8 @@ for($h=0; $h<48; $h++){
 </div>
 <button id="sendSelect">select</button>
 <button id="sendRemove">remove</button>
-<pre id="showData" style="width:80%;margin:10px;padding:10px;border:1px solid black"></pre>
+<br>
+<textarea id="showData" style="width:80%;margin:10px;padding:10px;border:1px solid black;height:300px" rows="50"></textarea>
 
 
 <script type="text/javascript">
@@ -86,12 +87,10 @@ var week_nb = null;
 var week_first_day = null;
 var current_week_days = null;
 var data_stamp = null; // max value of teacher's data_stamp and student's data stamp
-var crtSchedules = null; // schedule of teacher, removed the times of res and opes in whiche tid as role student
-var crtReservations = null; // student's all reservations
-var crtOperations = null; // student's all operations
 
-var crtTeacherReservationsTiers = null; // contains les info annonyme
-var crtTeacherOperationsTiers = null; // contains les info annonyme
+var crtSchedules = null; // schedule of teacher, removed the times of res and opes in whiche tid as role student
+var crtStudentLessons = null; // student's all lessons, with role student or teacher
+var crtTeacherLessonsTies = null; // teacher's all lessons with others, with role student or teacher
 
 // mouse reaction needed
 var selection_begin = null;
@@ -126,6 +125,12 @@ var SBK_TYPE_UPDATE = "<?=SBK_TYPE_UPDATE?>";
 var SBK_TYPE_LOAD = "<?=SBK_TYPE_LOAD?>";
 var SBK_TYPE_REFRESH = "<?=SBK_TYPE_REFRESH?>";
 var SBK_TYPE_TEACHERLIST = "<?=SBK_TYPE_TEACHERLIST?>";
+
+var LESSON_STATUT_DELETING = "<?=LESSON_STATUT_DELETING?>"
+var LESSON_STATUT_CREATING = "<?=LESSON_STATUT_CREATING?>"
+var LESSON_STATUT_CREATED = "<?=LESSON_STATUT_CREATED?>"
+var LESSON_STATUT_FIXED = "<?=LESSON_STATUT_FIXED?>"
+
 
 /************* ajax **************/
 function loadTeachers(){
@@ -182,17 +187,20 @@ function autoSBKRefresh(){
 	queryRefresh.sendAjaxQuery(demande);
 }
 
+
+function displayVars(responseData){
+	var t = "crtStudentLessons = " + JSON.stringify(crtStudentLessons);
+	t +=  "\n\crtTeacherLessonsTies = " + JSON.stringify(crtTeacherLessonsTies);
+//	t +=  "\n\nresponseData = " + JSON.stringify(responseData);
+	$("#showData").html(t);
+}
+
 function feedTeacherSelector(responseData){
-	$("#showData").html(JSON.stringify(responseData));
 	crtTeacherList = responseData;
 	showDatas();
 }
 
 function showScheduleData(responseData){
-
-	// for test data
-	$("#showData").html(JSON.stringify(responseData));
-
 	// do not show unchanged refresh result
 	if(responseData["action"]==SBK_TYPE_REFRESH){
 		if(!(responseData["week_nb"] == week_nb && responseData["timestamp"]>data_stamp)){
@@ -210,14 +218,24 @@ function showScheduleData(responseData){
 	current_week_days = responseData["current_week_days"]
 
 	crtSchedules = responseData["schedule_data"];
-	crtTeacherReservationsTiers = responseData["crtTeacherReservationsTiers"];
-	crtTeacherOperationsTiers = responseData["crtTeacherOperationsTiers"];
-
-	crtReservations = responseData["reservation_data"];
-	crtOperations = responseData["operation_data"];
-
+	crtStudentLessons = responseData["crtStudentLessons"];
+	crtTeacherLessonsTies = responseData["crtTeacherLessonsTies"];
 	
 	showDatas();
+
+}
+
+function setCellAttrbuts(day_nb, h, statut, type){
+	var d = day_nb-week_first_day;
+	$("#cal_"+d+"_"+h).attr("data-statut", statut)
+	.attr("data-day", day_nb)
+	.attr("data-h", h)
+	.attr("data-type", type)
+	.html(day_nb + " - " + h)
+	;
+}
+
+function showLessonElm(lesson){
 
 }
 
@@ -235,80 +253,43 @@ function showDatas(){
 		for(var d=0; d<7; d++){
 			var schedule = crtSchedules[d];
 			for(var h=0; h<48; h++){
-				$("#cal_"+d+"_"+h).attr("data-statut", schedule.day_status[h])
-				.attr("data-day", schedule.day_nb)
-				.attr("data-h", h)
-				.html(schedule.day_nb + " - " + h)
-				.attr("data-type", "");
+				setCellAttrbuts(schedule.day_nb, h, schedule.day_status[h], "");
 			}
 		}
 	}else{
 		for(var d=0; d<7; d++){
 			for(var h=0; h<48; h++){
-				$("#cal_"+d+"_"+h).attr("data-statut", 0)
-				.attr("data-day", current_week_days[d].day_nb)
-				.attr("data-h", h)
-				.html(current_week_days[d].day_nb + " - " + h)
-				.attr("data-type", "");
+				setCellAttrbuts(current_week_days[d].day_nb, h, 0, "");
 			}
 		}
 	}
 
-	// show reservations
-	if(crtReservations != null){
-		for(var i=0; i<crtReservations.length; i++){
-			var reservation = crtReservations[i];
-			var d = reservation.day_nb - week_first_day;
-			var type = "res_"+(reservation.tid==uid?"t":"s");
-			for(var h=reservation.begin_nb; h<=reservation.end_nb; h++){
-				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
-			}
+	// show student lessons
+	if(crtStudentLessons != null){
+		for(var i=0; i<crtStudentLessons.length; i++){
+			showLessonElm(crtStudentLessons[i]);
+		}
+	}
+			// 	var reservation = crtReservations[i];
+			// var d = reservation.day_nb - week_first_day;
+			// var type = "res_"+(reservation.tid==uid?"t":"s");
+			// for(var h=reservation.begin_nb; h<=reservation.end_nb; h++){
+			// 	$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
+			// }
+
+	// show teacher tier lessons
+	if(crtTeacherLessonsTies != null){
+		for(var i=0; i<crtTeacherLessonsTies.length; i++){
+			showLessonElm(crtTeacherLessonsTies[i]);
 		}
 	}
 
-	// show operations
-	if(crtOperations != null){
-		for(var i=0; i<crtOperations.length; i++){
-			var operation = crtOperations[i];
-			var d = operation.day_nb - week_first_day;
-			var type = "ope_";
-			type += (operation.tid==uid?"t":"s");
-			type += "_"+operation.statut;
-			for(var h=operation.begin_nb; h<=operation.end_nb; h++){
-				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
-			}
-		}
-	}
-
-	// show tiers reservations
-	if(crtTeacherReservationsTiers != null){
-		for(var i=0; i<crtTeacherReservationsTiers.length; i++){
-			var reservation = crtTeacherReservationsTiers[i];
-			var d = reservation.day_nb - week_first_day;
-			var type = "res_"+(reservation.tid==uid?"t":"s");
-			for(var h=reservation.begin_nb; h<=reservation.end_nb; h++){
-				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
-			}
-		}
-	}
-
-	// show tiers operations
-	if(crtTeacherOperationsTiers != null){
-		for(var i=0; i<crtTeacherOperationsTiers.length; i++){
-			var operation = crtTeacherOperationsTiers[i];
-			var d = operation.day_nb - week_first_day;
-			var type = "ope_";
-			type += (operation.tid==uid?"t":"s");
-			type += "_"+operation.statut;
-			for(var h=operation.begin_nb; h<=operation.end_nb; h++){
-				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
-			}
-		}
-	}
 
 	$("#week_title").html(week_nb);
 	showTeacherOptions();
 
+	// for test
+	displayVars();
 }
 
 function showTeacherOptions(){
@@ -495,8 +476,7 @@ function initPresentationElements(){
 function clearCrtTeacherData(){
 	tid = null;
 	crtSchedules = null;
-	crtTeacherReservationsTiers = null;
-	crtTeacherOperationsTiers = null;	
+	crtTeacherLessonsTies = null;
 }
 
 /**********  element reaction definitions *********/
@@ -554,10 +534,12 @@ $("#sendRemove").click(function(){
 
 $("#week_pre").click(function(){
 	loadSBKData(week_nb-1);
+	event.preventDefault();
 });
 
 $("#week_next").click(function(){
 	loadSBKData(week_nb-(-1));
+	event.preventDefault();
 });
 
 initPresentationElements();
