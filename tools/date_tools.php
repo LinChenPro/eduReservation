@@ -78,6 +78,19 @@ function hNbToTime($h_nb){
 	return sprintf("%'.02d",$hour).":".sprintf("%'.02d",$minute);
 }
 
+function getWeekDays($week_nb){
+	$current_week_days = array();
+	$day_nb = getWeekFirstDayNb($week_nb);
+	for($i=0; $i<7; $i++){
+		$day_i = (object)[
+			'day_nb' => $day_nb+$i,
+			'text' => dayNbToStr($day_nb+$i)
+		];
+		array_push($current_week_days, $day_i);
+	}
+	return $current_week_days;	
+}
+
 
 /*
 */

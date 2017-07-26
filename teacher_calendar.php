@@ -133,7 +133,7 @@ function showScheduleData(responseData){
 	week_first_day = responseData["week_first_day"];
 	data_stamp = responseData["timestamp"];
 
-	if(responseData["action"]=="<?=TCA_TYPE_LOAD?>"){
+	if(responseData["action"]!=TCA_TYPE_REFRESH){
 		initSelectionVars();
 	}
 

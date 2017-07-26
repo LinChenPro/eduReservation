@@ -5,9 +5,15 @@ require_once('defines/environnement_head.php');
 
 $uid = getCurrentUid();
 $user = dbFindByKey("User", $uid);
+$currentSession = getOrCreateSession($uid);
+if($currentSession->session_statut!=SESSION_STATUT_INOPERATION){
+	TODO("booking : forbidden normal operations to session in special statut");
+}
 
 $demand_action = $_REQUEST["action"];
-$demand_uid = $_REQUEST["uid"];
+$demand_tid = $_REQUEST["tid"];
+$demand_sid = $_REQUEST["sid"];
+$demand_categ_id = $_REQUEST["categ_id"];
 $demand_week_nb = $_REQUEST["week_nb"];
 $demand_timestamp = $_REQUEST["timestamp"];
 
@@ -18,13 +24,24 @@ $demand_week_nb = $_POST["week_nb"];
 $demand_timestamp = $_POST["timestamp"];
 */
 
-if($demand_action==TCA_TYPE_LOAD){
+if($demand_action==SBK_TYPE_TEACHERLIST){
+	if(empty($demand_categ_id)){
+		echo json_encode(array());
+	}else{
+		$responseObj = getCurrentCategTeachers($demand_categ_id, $demand_sid, $currentSession->session_create_time);
+		if($responseObj==null){
+			$responseObj = array();
+		}
+		echo json_encode($responseObj);
+	}
+
+}else if($demand_action==SBK_TYPE_LOAD){
 	if(empty($demand_week_nb) || $demand_week_nb<=0){
 		$demand_week_nb = dateToWeekNb();
 	}
-	$responseObj = loadTeacherCalendar($uid, $demand_week_nb);
+	$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
 	echo json_encode($responseObj);
-}else if($demand_action==TCA_TYPE_UPDATE){
+}else if($demand_action==SBK_TYPE_UPDATE){
 		$demand_from_day = $_REQUEST["from_day"];
 		$demand_from_h = $_REQUEST["from_h"];
 		$demand_to_day = $_REQUEST["to_day"];
@@ -41,12 +58,15 @@ if($demand_action==TCA_TYPE_LOAD){
 			$demand_to_statut
 		);
 
-		$responseObj->action = TCA_TYPE_UPDATE;
+		$responseObj->action = SBK_TYPE_UPDATE;
 		echo json_encode($responseObj);
-}else if($demand_action==TCA_TYPE_REFRESH){
+}else if($demand_action==SBK_TYPE_REFRESH){
 	$has_change = false;
 	for($i=0; $i<10; $i++){
-		$has_change = checkChange($uid, $demand_week_nb, $demand_timestamp);
+		$has_change = checkChange($demand_sid, $demand_week_nb, $demand_timestamp);
+		if(!$has_change && $demand_tid != null){
+			$has_change = checkChange($demand_tid, $demand_week_nb, $demand_timestamp);
+		} 
 		if($has_change){
 			break;
 		}
@@ -54,13 +74,15 @@ if($demand_action==TCA_TYPE_LOAD){
 	}
 
 	if($has_change){
-		$responseObj = loadTeacherCalendar($uid, $demand_week_nb);
-		$responseObj->action = TCA_TYPE_REFRESH;
+		$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
+		$responseObj->action = SBK_TYPE_REFRESH;
 		echo json_encode($responseObj);
 	}else{
-		$responseObj = TeacherCalendarResponse::newInstance(
-			$demand_uid, 
-			TCA_TYPE_REFRESH, 
+		$responseObj = StudentCalendarResponse::newInstance(
+			$demand_tid, 
+			$demand_sid, 
+			$demand_categ_id, 
+			SBK_TYPE_REFRESH, 
 			$demand_week_nb, 
 			$demand_timestamp, 
 			true

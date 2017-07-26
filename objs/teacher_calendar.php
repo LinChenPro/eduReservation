@@ -286,6 +286,20 @@ function updateCalendarsToDb($tid, $week_nb, $schedule_data){
 }
 
 /**** function week stamp *****/
+function getUsersWeekStamp($week_nb, ...$uid_arr){
+	$sql = "select max(stamp_time) as stamp_time from weekly_action_stamp where stamp_uid in(".concat("", ",", ...$uid_arr).") and stamp_week_nb=$week_nb";
+
+	$stamp_time = dbGetObjByQuery($sql, function($row){
+		return $row["stamp_time"];
+	});
+
+	if($stamp_time==null){
+		$stamp_time = getDateZeroStr();
+	}
+	return $stamp_time;
+
+}
+
 function getUserWeekStamp($uid, $week_nb){
 	$sql = "select * from weekly_action_stamp where stamp_uid=$uid and stamp_week_nb=$week_nb";
 

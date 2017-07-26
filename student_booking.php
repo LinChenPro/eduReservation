@@ -19,8 +19,8 @@ if($currentSession->session_statut!=SESSION_STATUT_INOPERATION){
 	student : <?=$user->user_name?>
 	&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
 	select category : 
-	<select name="select_categ">
-		<option></option>
+	<select name="categ_selector" id="categ_selector">
+		<option value="">Please select a category</option>
 <?php
 // options of categories
 $categs = Categ::getCategs("categ_id in(select distinct(tc_categ_id) from teacher_categ where (tc_expire_time is null or tc_expire_time>'".$currentSession->session_create_time."'))");
@@ -35,9 +35,7 @@ if(!empty($categs)){
 	</select>
 	&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
 	select teacher : 
-	<select name="select_teacher">
-		<option></option>
-	</select>
+	<select name="teacher_selector" id="teacher_selector"></select>
 </div>
 
 
@@ -77,15 +75,18 @@ for($h=0; $h<48; $h++){
 
 <script type="text/javascript">
 /************  param js:  **************/
-var demandeUrl = "/student_booking_treate.php"
+var demandeUrl = "/student_booking_treate.php?uid=<?=$uid?>"
 
 // datas
+
 var uid=<?=$uid?>; // student id
+var categ_id = null // categ id;
 var tid=null; // teacher id
 var week_nb = null;
 var week_first_day = null;
+var current_week_days = null;
 var data_stamp = null; // max value of teacher's data_stamp and student's data stamp
-var crtSchedules = null; // schedule of teacher, removed the res and opes in whiche tid as role student
+var crtSchedules = null; // schedule of teacher, removed the times of res and opes in whiche tid as role student
 var crtReservations = null; // student's all reservations
 var crtOperations = null; // student's all operations
 
@@ -98,6 +99,7 @@ var selection_end = null;
 var isMouseDown = false;
 
 var crtDetalTD = null; // td whose elm detail info shows in a div float
+var crtTeacherList = null;
 
 
 // list of request
@@ -114,22 +116,34 @@ var queryGetTeacherLists = null;	// *+
 */
 
 // ajax query objects
-var queryLoad = new AjaxQuery("queryLoad", showScheduleData, autoTCRefresh, demandeUrl);
-var queryUpdate = new AjaxQuery("queryUpdate", showScheduleData, autoTCRefresh, demandeUrl);
-var queryRefresh = new AjaxQuery("queryRefresh", showScheduleData, autoTCRefresh, demandeUrl, true);
+var queryLoad = new AjaxQuery("queryLoad", showScheduleData, autoSBKRefresh, demandeUrl);
+var queryUpdate = new AjaxQuery("queryUpdate", showScheduleData, autoSBKRefresh, demandeUrl);
+var queryRefresh = new AjaxQuery("queryRefresh", showScheduleData, autoSBKRefresh, demandeUrl, true);
+var queryTeacherList = new AjaxQuery("queryTeacherList", feedTeacherSelector, autoSBKRefresh, demandeUrl);
 
 // ajax request type constants
-var TCA_TYPE_UPDATE = "<?=TCA_TYPE_UPDATE?>";
-var TCA_TYPE_LOAD = "<?=TCA_TYPE_LOAD?>";
-var TCA_TYPE_REFRESH = "<?=TCA_TYPE_REFRESH?>";
+var SBK_TYPE_UPDATE = "<?=SBK_TYPE_UPDATE?>";
+var SBK_TYPE_LOAD = "<?=SBK_TYPE_LOAD?>";
+var SBK_TYPE_REFRESH = "<?=SBK_TYPE_REFRESH?>";
+var SBK_TYPE_TEACHERLIST = "<?=SBK_TYPE_TEACHERLIST?>";
 
 /************* ajax **************/
-
-
-function sentTCDemand(d1, t1, d2, t2, to_statut){
+function loadTeachers(){
 	var demande = { 
-		'action' : TCA_TYPE_UPDATE, 
-		'uid' : uid, 
+		'action' : SBK_TYPE_TEACHERLIST, 
+		'sid' : uid,
+		'categ_id': categ_id 
+	};
+	queryTeacherList.sendAjaxQuery(demande);
+}
+
+
+function sentSBKDemand(d1, t1, d2, t2, to_statut){
+	var demande = { 
+		'action' : SBK_TYPE_UPDATE, 
+		'categ_id' : categ_id, 
+		'tid' : tid, 
+		'sid' : uid,
 		'week_nb' : week_nb, 
 		'from_day': d1,
 		'from_h' : t1,
@@ -140,66 +154,106 @@ function sentTCDemand(d1, t1, d2, t2, to_statut){
 	queryUpdate.sendAjaxQuery(demande);
 }
 
-function loadTCData(demande_week_nb){
+function loadSBKData(demande_week_nb){
 	if(demande_week_nb!=null){
 		week_nb = demande_week_nb;
 	}
 	send_week_nb = demande_week_nb==null?week_nb:demande_week_nb;
 	var demande = { 
-		'action' : TCA_TYPE_LOAD, 
-		'uid' : uid, 
+		'action' : SBK_TYPE_LOAD, 
+		'categ_id' : categ_id, 
+		'tid' : tid, 
+		'sid' : uid,
 		'week_nb' : send_week_nb
 	};
-
 	queryLoad.sendAjaxQuery(demande);
 
 }
 
-function autoTCRefresh(){
+function autoSBKRefresh(){
 	var demande = { 
-		'action' : TCA_TYPE_REFRESH, 
-		'uid' : uid, 
+		'action' : SBK_TYPE_REFRESH, 
+		'categ_id' : categ_id, 
+		'tid' : tid, 
+		'sid' : uid,
 		'week_nb' : week_nb, 
 		'timestamp' : data_stamp
 	};
 	queryRefresh.sendAjaxQuery(demande);
 }
 
-
+function feedTeacherSelector(responseData){
+	$("#showData").html(JSON.stringify(responseData));
+	crtTeacherList = responseData;
+	showTeacherOptions();
+}
 
 function showScheduleData(responseData){
+
+	// for test data
+	$("#showData").html(JSON.stringify(responseData));
+
 	// do not show unchanged refresh result
-	if(responseData["action"]==TCA_TYPE_REFRESH){
+	if(responseData["action"]==SBK_TYPE_REFRESH){
 		if(!(responseData["week_nb"] == week_nb && responseData["timestamp"]>data_stamp)){
 			return;
 		}
 	}
 
-	week_nb = responseData["week_nb"];
-	week_first_day = responseData["week_first_day"];
-	data_stamp = responseData["timestamp"];
-
-	if(responseData["action"]=="<?=TCA_TYPE_LOAD?>"){
+	if(responseData["action"]!=SBK_TYPE_REFRESH){
 		initSelectionVars();
 	}
 
-	// show schedule
-	crtSchedules = responseData["schedule_data"];
-	for(var d=0; d<7; d++){
-		var schedule = crtSchedules[d];
-		$("#cal_d_"+d).html(schedule.day_str);
+	week_nb = responseData["week_nb"];
+	week_first_day = responseData["week_first_day"];
+	data_stamp = responseData["timestamp"];
+	current_week_days = responseData["current_week_days"]
 
-		for(var h=0; h<48; h++){
-			$("#cal_"+d+"_"+h).attr("data-statut", schedule.day_status[h])
-			.attr("data-day", schedule.day_nb)
-			.attr("data-h", h)
-			.html(schedule.day_nb + " - " + h)
-			.attr("data-type", "");
+	crtSchedules = responseData["schedule_data"];
+	crtReservations = responseData["reservation_data"];
+	crtOperations = responseData["operation_data"];
+
+	crtTeacherReservationsTiers = responseData["crtTeacherReservationsTiers"];
+	crtTeacherOperationsTiers = responseData["crtTeacherOperationsTiers"];
+	
+	showDatas();
+
+}
+
+function showDatas(){
+	// show current_week_days
+	if(current_week_days != null){
+		for(var d=0; d<7; d++){
+			var text = current_week_days[d].text;
+			$("#cal_d_"+d).html(text);
+		}
+	}
+
+	// show schedule
+	if(schedule!=null){
+		for(var d=0; d<7; d++){
+			var schedule = crtSchedules[d];
+			for(var h=0; h<48; h++){
+				$("#cal_"+d+"_"+h).attr("data-statut", schedule.day_status[h])
+				.attr("data-day", schedule.day_nb)
+				.attr("data-h", h)
+				.html(schedule.day_nb + " - " + h)
+				.attr("data-type", "");
+			}
+		}
+	}else{
+		for(var d=0; d<7; d++){
+			for(var h=0; h<48; h++){
+				$("#cal_"+d+"_"+h).attr("data-statut", 0)
+				.attr("data-day", current_week_days[d].day_nb)
+				.attr("data-h", h)
+				.html(current_week_days[d].day_nb + " - " + h)
+				.attr("data-type", "");
+			}
 		}
 	}
 
 	// show reservations
-	crtReservations = responseData["reservation_data"];
 	if(crtReservations != null){
 		for(var i=0; i<crtReservations.length; i++){
 			var reservation = crtReservations[i];
@@ -212,7 +266,6 @@ function showScheduleData(responseData){
 	}
 
 	// show operations
-	crtOperations = responseData["operation_data"];
 	if(crtOperations != null){
 		for(var i=0; i<crtOperations.length; i++){
 			var operation = crtOperations[i];
@@ -226,12 +279,27 @@ function showScheduleData(responseData){
 		}
 	}
 
-	$("#week_title").html(responseData.week_nb);
-	$("#showData").html(JSON.stringify(responseData));
+	$("#week_title").html(week_nb);
+	showTeacherOptions();
+
 }
 
-
-
+function showTeacherOptions(){
+	var teacherSelector = $("#teacher_selector");
+	if(crtTeacherList == null){
+		teacherSelector.html('<option value="">please select first the category</option>');
+	}else if(crtTeacherList.length==0){
+		teacherSelector.html('<option value="">no available teacher for this category</option>');
+	}else{
+		var optionCode = '<option value="">please select a teacher</option>';
+		for(var i=0; i<crtTeacherList.length; i++){
+			var teacher = crtTeacherList[i];
+			var selected = teacher.tid==tid ? " selected" : "";
+			optionCode += '<option value="'+teacher.tid+'"'+selected+'>'+teacher.t_name+' prise:'+(teacher.teacher_prise/100)+'</option>\n';
+		}
+		teacherSelector.html(optionCode);
+	}
+}
 
 
 
@@ -399,6 +467,28 @@ function initPresentationElements(){
 
 
 /**********  element reaction definitions *********/
+// treate selection of category
+$("#categ_selector").change(function(){
+	categ_id = this.value == "" ? null : this.value;
+	if(categ_id==null){
+		tid = null;
+		crtSchedules = null;
+		crtTeacherReservationsTiers = null;
+		crtTeacherOperationsTiers = null;
+		crtTeacherList = null;
+
+		initSelectionVars();
+		showDatas();
+	}else{
+		loadTeachers();
+	}
+});
+
+$("#teacher_selector").change(function(){
+	tid = this.value == "" ? null : this.value;
+	loadSBKData();
+});
+
 $("#sendSelect").click(function(){
 	if(selection_begin!=null && selection_end!=null){
 		var d_min = Math.min(selection_begin.day, selection_end.day);
@@ -406,7 +496,7 @@ $("#sendSelect").click(function(){
 		var h_min = Math.min(selection_begin.h, selection_end.h);
 		var h_max = Math.max(selection_begin.h, selection_end.h);
 
-		sentTCDemand(d_min, h_min, d_max, h_max, 1);
+		sentSBKDemand(d_min, h_min, d_max, h_max, 1);
 	}
 });
 
@@ -417,21 +507,21 @@ $("#sendRemove").click(function(){
 		var h_min = Math.min(selection_begin.h, selection_end.h);
 		var h_max = Math.max(selection_begin.h, selection_end.h);
 
-		sentTCDemand(d_min, h_min, d_max, h_max, 0);
+		sentSBKDemand(d_min, h_min, d_max, h_max, 0);
 	}
 });
 
 $("#week_pre").click(function(){
-	loadTCData(week_nb-1);
+	loadSBKData(week_nb-1);
 });
 
 $("#week_next").click(function(){
-	loadTCData(week_nb-(-1));
+	loadSBKData(week_nb-(-1));
 });
 
 initPresentationElements();
 
-loadTCData();
+loadSBKData();
 
 </script>
 

@@ -53,9 +53,26 @@ class TeacherCateg{
 		return dbGetObjsByQuery($sql, "TeacherCateg::dbLineToObj");
 	}
 
-
 }
 
+function getCurrentCategTeachers($categ_id, $sid, $demande_time){
+	$sql = "select user_id, user_name, tp_id, tp_prise from users, teacher_categ,";
+	$sql.= "(select tp_id, tp_tid, tp_prise from teacher_prise where tp_prise is not null and tp_id in";
+	$sql.= "(select max(tp_id) from teacher_prise where tp_effective_time<'$demande_time' and tp_categ_id=$categ_id group by tp_tid)) as p ";
+	$sql.= "where tc_tid=user_id and tc_categ_id=$categ_id and user_id<>$sid and (tc_expire_time is null or tc_expire_time >'$demande_time') and tp_tid=user_id";
+
+	return dbGetObjsByQuery($sql, function($line){
+		$obj = (object)[
+			'tid' => $line["user_id"],
+			't_name' => $line["user_name"],
+			'teacher_prise_id' => $line["tp_id"],
+			'teacher_prise' => $line["tp_prise"],
+		];
+
+		return $obj;
+	});
+
+}
 /*
 static public function getTeacherAvailableCategs($tid){
 	return dbFindObjs('Categ', "categ_id in(select tc_categ_id from teacher_categs where tc_tid=$tid)");
@@ -65,3 +82,4 @@ static public function deleteTeacherAvailableCategs($tid){
 	return dbFindObjs('Categ', "categ_id in(select tc_categ_id from teacher_categs where tc_tid=$tid)");
 }
 */
+
