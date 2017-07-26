@@ -45,8 +45,8 @@ function loadStudentCalendar($tid, $sid, $categ_id, $week_nb){
 	$response->reservation_data = getUserReservations($sid, $week_nb);
 	$response->operation_data = getUserOperations($sid, $week_nb);
 
-	$response->crtTeacherReservationsTiers = $tid==null ? null : getUserReservations($tid, $week_nb);
-	$response->crtTeacherOperationsTiers = $tid==null ? null : getUserOperations($tid, $week_nb);
+	$response->crtTeacherReservationsTiers = $tid==null ? null : getUserReservations($tid, $week_nb, "$sid not in(res_tid, res_sid)");
+	$response->crtTeacherOperationsTiers = $tid==null ? null : getUserOperations($tid, $week_nb, "$sid not in(ope_tid, session_sid)");
 	$response->succes = true;
 	$response->error = null;
 	$response->infos = null;

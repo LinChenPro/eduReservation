@@ -120,13 +120,16 @@ class Reservation{
 	public $statut;
 }
 
-function getUserReservations($uid, $week_nb){
+function getUserReservations($uid, $week_nb, ...$clauses){
 	$sql = "select reservation.*, t.user_name as t_name, s.user_name as s_name, c.categ_name as categ_name "
 		."from reservation, users as t, users as s, categories as c "
 		."where t.user_id=res_tid and s.user_id=res_sid and c.categ_id=res_categ_id "
 		."and res_week_nb=$week_nb "
 		."and res_statut in(1,4,5,6) "
 		."and $uid in(res_tid, res_sid)";
+	if(!empty($clauses)){
+		$sql .= concat(" and ", " and ", ...$clauses);
+	}
 
 	$reservationArr = dbGetObjsByQuery($sql, function($row){
 		$reservation = new Reservation();
@@ -169,13 +172,16 @@ class Operation{
 
 
 
-function getUserOperations($uid, $week_nb){
+function getUserOperations($uid, $week_nb, ...$clauses){
 	$sql = "select student_operation.*, t.user_name as t_name, s.user_id as sid, s.user_name as s_name, c.categ_name as categ_name "
 		."from student_operation, student_session, users as t, users as s, categories as c "
 		."where ope_session_id=session_id and session_expire_time>=CURRENT_TIMESTAMP "
 		."and t.user_id=ope_tid and s.user_id=session_sid and c.categ_id=ope_categ_id "
 		."and ope_week_nb=$week_nb "
 		."and $uid in(ope_tid, session_sid)";
+	if(!empty($clauses)){
+		$sql .= concat(" and ", " and ", ...$clauses);
+	}
 
 	$operationArr = dbGetObjsByQuery($sql, function($row){
 		$operation = new Operation();

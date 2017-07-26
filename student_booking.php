@@ -185,7 +185,7 @@ function autoSBKRefresh(){
 function feedTeacherSelector(responseData){
 	$("#showData").html(JSON.stringify(responseData));
 	crtTeacherList = responseData;
-	showTeacherOptions();
+	showDatas();
 }
 
 function showScheduleData(responseData){
@@ -210,11 +210,12 @@ function showScheduleData(responseData){
 	current_week_days = responseData["current_week_days"]
 
 	crtSchedules = responseData["schedule_data"];
+	crtTeacherReservationsTiers = responseData["crtTeacherReservationsTiers"];
+	crtTeacherOperationsTiers = responseData["crtTeacherOperationsTiers"];
+
 	crtReservations = responseData["reservation_data"];
 	crtOperations = responseData["operation_data"];
 
-	crtTeacherReservationsTiers = responseData["crtTeacherReservationsTiers"];
-	crtTeacherOperationsTiers = responseData["crtTeacherOperationsTiers"];
 	
 	showDatas();
 
@@ -230,7 +231,7 @@ function showDatas(){
 	}
 
 	// show schedule
-	if(schedule!=null){
+	if(crtSchedules!=null){
 		for(var d=0; d<7; d++){
 			var schedule = crtSchedules[d];
 			for(var h=0; h<48; h++){
@@ -269,6 +270,32 @@ function showDatas(){
 	if(crtOperations != null){
 		for(var i=0; i<crtOperations.length; i++){
 			var operation = crtOperations[i];
+			var d = operation.day_nb - week_first_day;
+			var type = "ope_";
+			type += (operation.tid==uid?"t":"s");
+			type += "_"+operation.statut;
+			for(var h=operation.begin_nb; h<=operation.end_nb; h++){
+				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
+			}
+		}
+	}
+
+	// show tiers reservations
+	if(crtTeacherReservationsTiers != null){
+		for(var i=0; i<crtTeacherReservationsTiers.length; i++){
+			var reservation = crtTeacherReservationsTiers[i];
+			var d = reservation.day_nb - week_first_day;
+			var type = "res_"+(reservation.tid==uid?"t":"s");
+			for(var h=reservation.begin_nb; h<=reservation.end_nb; h++){
+				$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
+			}
+		}
+	}
+
+	// show tiers operations
+	if(crtTeacherOperationsTiers != null){
+		for(var i=0; i<crtTeacherOperationsTiers.length; i++){
+			var operation = crtTeacherOperationsTiers[i];
 			var d = operation.day_nb - week_first_day;
 			var type = "ope_";
 			type += (operation.tid==uid?"t":"s");
@@ -463,30 +490,44 @@ function initPresentationElements(){
 	.mouseout(function(){hideResOpeDetail(this)});
 }
 
+/**********  data manipunations *********/
 
-
+function clearCrtTeacherData(){
+	tid = null;
+	crtSchedules = null;
+	crtTeacherReservationsTiers = null;
+	crtTeacherOperationsTiers = null;	
+}
 
 /**********  element reaction definitions *********/
+
+
 // treate selection of category
 $("#categ_selector").change(function(){
 	categ_id = this.value == "" ? null : this.value;
+	crtTeacherList = null;
+	clearCrtTeacherData();
 	if(categ_id==null){
-		tid = null;
-		crtSchedules = null;
-		crtTeacherReservationsTiers = null;
-		crtTeacherOperationsTiers = null;
-		crtTeacherList = null;
-
 		initSelectionVars();
+		clearCrtTeacherData();
 		showDatas();
 	}else{
+		initSelectionVars();
+		clearCrtTeacherData();
 		loadTeachers();
 	}
 });
 
 $("#teacher_selector").change(function(){
 	tid = this.value == "" ? null : this.value;
-	loadSBKData();
+	if(tid != null){
+		loadSBKData();
+	}else{
+		clearCrtTeacherData();
+		initSelectionVars();
+		showDatas();
+
+	}
 });
 
 $("#sendSelect").click(function(){
