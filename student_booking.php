@@ -45,7 +45,8 @@ if(!empty($categs)){
 	<a id="week_next" href="#"> next week </a>
 </div>
 <div id="teacher_calendar_div" style="position:relative;">
-	<div id="res_ope_div"></div>
+	<div id="lesson_div"></div>
+	<span id="lesson_detail_span"></span>
 	<div id="selection_div" style="z-index:1"></div>
 	<div id="res_poe_detail_div" style="z-index:101"></div>
 	<table id="cal_table" style="z-index:100;position:relative;">
@@ -99,7 +100,6 @@ var isMouseDown = false;
 
 var crtDetalTD = null; // td whose elm detail info shows in a div float
 var crtTeacherList = null;
-
 
 // list of request
 /*
@@ -235,9 +235,56 @@ function setCellAttrbuts(day_nb, h, statut, type){
 	;
 }
 
+
+//------------- show lesson -----------
 function showLessonElm(lesson){
+	var spanObj = $('<span class="span_lesson"></span>').appendTo($("#lesson_div"));
+	initView(spanObj, lesson);
+	setLessonMouseOver(spanObj, lesson);
+	setLessonMouseOut(spanObj, lesson);
+}
+
+function getLessonPosition(day_nb, begin_h, end_h){
+	var p = {};
+	var obj_day = $("#cal_d_"+(day_nb-week_first_day));
+	var obj_eh = $("#cal_h_"+end_h);
+	p.top = $("#cal_h_"+begin_h).position().top;
+	p.left = obj_day.position().left;
+	p.width = obj_day.outerWidth();
+	p.height = obj_eh.position().top-p.top+obj_eh.outerHeight();
+	return p;
+}
+
+function initView(spanObj, lesson){
+	var pos = getLessonPosition(lesson.day_nb, lesson.begin_h, lesson.end_h);
+	spanObj.css("left", pos.left).css("top", pos.top).css("width", pos.width).css("height", pos.height);
+	spanObj.addClass(lesson.is_tiers?"tiers":"mine");
+	spanObj.addClass((lesson.tid==uid || lesson.sid==tid)? "role-invers" : null);
+	spanObj.addClass(lesson.editable? "editable" : null);
+
+	var text = lesson.t_name == null? "T" : lesson.t_name;
+	text += " " + (lesson.categ_name == null? "lesson" : lesson.categ_name);
+	text += " " + (lesson.s_name == null? "S" : lesson.s_name);
+	spanObj.html(text);
 
 }
+
+function setLessonMouseOver(obj, lesson){
+	obj.mouseover(function(evt){
+		var text = "lesson : "+(lesson.categ_name==null? "" : lesson.categ_name);
+		text +="<br>teacher :" + (lesson.t_name==null? "" : (lesson.tid==uid?"me" : lesson.t_name )); 
+		text +="<br>student :" + (lesson.s_name==null? "" : (lesson.sid==uid?"me" : lesson.s_name )); 
+		$("#lesson_detail_span").html(text);
+	});
+}
+
+function setLessonMouseOut(obj, lesson){
+	obj.mouseout(function(evt){
+		$("#lesson_detail_span").html("");
+	});
+}
+
+//-------------------------------------
 
 function showDatas(){
 	// show current_week_days
@@ -263,6 +310,9 @@ function showDatas(){
 			}
 		}
 	}
+
+	// clear old elements
+	$("#lesson_div").html("");
 
 	// show student lessons
 	if(crtStudentLessons != null){

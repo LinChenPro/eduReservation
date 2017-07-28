@@ -75,3 +75,32 @@
 	background-color:#FDD !important;
 }
 
+
+.span_lesson{
+	position:absolute;
+	z-index: 201;
+	box-sizing: border-box;	
+	border-radius:4px;
+	font-size: 7.5px;
+}
+
+.tiers{
+	background-color:#DDD;
+	border:1px solid green;
+}
+
+.mine{
+	background-color:#FFF;
+	border:2px solid green;
+}
+
+
+#lesson_detail_span{
+	position:absolute;
+	left : 850px;
+	top : 50px;
+	width:200px;
+	min-height: 200px;
+	display: inline-block;;
+	border:1px solid gray;
+}
