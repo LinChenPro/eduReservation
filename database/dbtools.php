@@ -127,3 +127,13 @@ function dbGetObjByQuery($query_sql, $convert_func){
 	return null;
 }
 
+function fieldQuery($query_sql, $field_name, $def=null){
+	$res = query($query_sql);
+	if ($res->num_rows > 0) {
+	    if($row = $res->fetch_assoc()) {
+	        return $row[$field_name];
+	    }
+	} 
+
+	return $def;
+}

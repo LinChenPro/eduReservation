@@ -110,3 +110,16 @@ student schedule : where tid in(selected_sid, selected_tid) or sid in(selected_s
 
 The only resource critic is the calendar week of every one.
 So the atomic opreation begin with the update of this table.
+
+
+
+current progress : 
+finish principal booking functions, 
+task rest:
+	the moving function, better creation and better detail span.
+	data level : 
+		should better manage teacher prise and categ availability, and bending time of prise-operation.
+		the data lock at DB is not exit yet.
+
+next step:
+submit operations to do the payment, then create the reservations.(with the manipulation of session statut)

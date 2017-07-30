@@ -88,3 +88,5 @@ function addOperation($tid, $sid, $categ_id, $tp_id, $week_nb, $day_nb, $begin_n
 	query($sql_insert_operation);
 
 }
+
+

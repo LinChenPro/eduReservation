@@ -102,9 +102,10 @@ function updateTeacherCalendar(
 define("RES_STATUT_CREATED", 1);
 define("RES_STATUT_DELETING", 2);
 define("RES_STATUT_DELETED", 3);
-define("RES_STATUT_FIXED", 4);
-define("RES_STATUT_ACTIVE", 5);
-define("RES_STATUT_FINISHED", 6);
+define("RES_STATUT_MOVING", 4);
+define("RES_STATUT_FIXED", 5);
+define("RES_STATUT_ACTIVE", 6);
+define("RES_STATUT_FINISHED", 7);
 
 class Reservation{
 	public $res_id;
@@ -114,10 +115,34 @@ class Reservation{
 	public $s_name;
 	public $categ_id;
 	public $categ_name;
+	public $week_nb;
 	public $day_nb;
 	public $begin_nb;
 	public $end_nb;
 	public $statut;
+	public $tp_id;
+	public $pur_id;
+
+
+}
+
+function dbLineToReservation($row){
+	$reservation = new Reservation();
+	$reservation->res_id = $row["res_id"];
+	$reservation->tid = $row["res_tid"];
+	$reservation->t_name = $row["t_name"];
+	$reservation->sid = $row["res_sid"];
+	$reservation->s_name = $row["s_name"];
+	$reservation->categ_id = $row["res_categ_id"];
+	$reservation->categ_name = $row["categ_name"];
+	$reservation->week_nb = $row["res_week_nb"];
+	$reservation->day_nb = $row["res_day_nb"];
+	$reservation->begin_nb = $row["res_begin_nb"];
+	$reservation->end_nb = $row["res_end_nb"];
+	$reservation->tp_id = $row["res_tp_id"];
+	$reservation->pur_id = $row["res_pur_id"];
+	$reservation->statut = $row["res_statut"];
+	return $reservation;
 }
 
 function getUserReservations($uid, $week_nb, ...$clauses){
@@ -125,31 +150,31 @@ function getUserReservations($uid, $week_nb, ...$clauses){
 		."from reservation, users as t, users as s, categories as c "
 		."where t.user_id=res_tid and s.user_id=res_sid and c.categ_id=res_categ_id "
 		."and res_week_nb=$week_nb "
-		."and res_statut in(1,4,5,6) "
+		."and res_statut not in(".RES_STATUT_DELETING.",".RES_STATUT_DELETED.") "
 		."and $uid in(res_tid, res_sid)";
 	if(!empty($clauses)){
 		$sql .= concat(" and ", " and ", ...$clauses);
 	}
-
-	$reservationArr = dbGetObjsByQuery($sql, function($row){
-		$reservation = new Reservation();
-		$reservation->res_id = $row["res_id"];
-		$reservation->tid = $row["res_tid"];
-		$reservation->t_name = $row["t_name"];
-		$reservation->sid = $row["res_sid"];
-		$reservation->s_name = $row["s_name"];
-		$reservation->categ_id = $row["res_categ_id"];
-		$reservation->categ_name = $row["categ_name"];
-		$reservation->day_nb = $row["res_day_nb"];
-		$reservation->begin_nb = $row["res_begin_nb"];
-		$reservation->end_nb = $row["res_end_nb"];
-		$reservation->statut = $row["res_statut"];
-		return $reservation;
-	});
+	$reservationArr = dbGetObjsByQuery($sql, 'dbLineToReservation');
 
 	return $reservationArr;
 
 }
+
+function getReservationById($res_id, ...$clauses){
+	$sql = "select reservation.*, t.user_name as t_name, s.user_name as s_name, c.categ_name as categ_name "
+		."from reservation, users as t, users as s, categories as c "
+		."where res_id=$res_id and t.user_id=res_tid and s.user_id=res_sid and c.categ_id=res_categ_id ";
+	if(!empty($clauses)){
+		$sql .= concat(" and ", " and ", ...$clauses);
+	}
+
+	$reservation = dbGetObjByQuery($sql, 'dbLineToReservation');
+
+	return $reservation;
+
+}
+
 
 /* --------------------------------------------------------------- */
 define("OPE_STATUT_TOCREATE", 1);
@@ -164,13 +189,30 @@ class Operation{
 	public $s_name;
 	public $categ_id;
 	public $categ_name;
+	public $week_nb;
 	public $day_nb;
 	public $begin_nb;
 	public $end_nb;
 	public $statut;
 }
 
-
+function dbLineToOperation($row){
+		$operation = new Operation();
+		$operation->ope_id = $row["ope_id"];
+		$operation->res_id = $row["ope_res_id"];
+		$operation->tid = $row["ope_tid"];
+		$operation->t_name = $row["t_name"];
+		$operation->sid = $row["sid"];
+		$operation->s_name = $row["s_name"];
+		$operation->categ_id = $row["ope_categ_id"];
+		$operation->categ_name = $row["categ_name"];
+		$operation->week_nb = $row["ope_week_nb"];
+		$operation->day_nb = $row["ope_day_nb"];
+		$operation->begin_nb = $row["ope_begin_nb"];
+		$operation->end_nb = $row["ope_end_nb"];
+		$operation->statut = $row["ope_statut"];
+		return $operation;	
+}
 
 function getUserOperations($uid, $week_nb, ...$clauses){
 	$sql = "select student_operation.*, t.user_name as t_name, s.user_id as sid, s.user_name as s_name, c.categ_name as categ_name "
@@ -183,24 +225,25 @@ function getUserOperations($uid, $week_nb, ...$clauses){
 		$sql .= concat(" and ", " and ", ...$clauses);
 	}
 
-	$operationArr = dbGetObjsByQuery($sql, function($row){
-		$operation = new Operation();
-		$operation->ope_id = $row["ope_id"];
-		$operation->res_id = $row["ope_res_id"];
-		$operation->tid = $row["ope_tid"];
-		$operation->t_name = $row["t_name"];
-		$operation->sid = $row["sid"];
-		$operation->s_name = $row["s_name"];
-		$operation->categ_id = $row["ope_categ_id"];
-		$operation->categ_name = $row["categ_name"];
-		$operation->day_nb = $row["ope_day_nb"];
-		$operation->begin_nb = $row["ope_begin_nb"];
-		$operation->end_nb = $row["ope_end_nb"];
-		$operation->statut = $row["ope_statut"];
-		return $operation;
-	});
+	$operationArr = dbGetObjsByQuery($sql, 'dbLineToOperation');
 
 	return $operationArr;
+
+}
+
+function getOperationById($ope_id, ...$clauses){
+	$sql = "select student_operation.*, t.user_name as t_name, s.user_id as sid, s.user_name as s_name, c.categ_name as categ_name "
+		."from student_operation, student_session, users as t, users as s, categories as c "
+		."where ope_session_id=session_id and session_expire_time>=CURRENT_TIMESTAMP "
+		."and t.user_id=ope_tid and s.user_id=session_sid and c.categ_id=ope_categ_id "
+		."and ope_id=$ope_id";
+	if(!empty($clauses)){
+		$sql .= concat(" and ", " and ", ...$clauses);
+	}
+
+	$operation = dbGetObjByQuery($sql, 'dbLineToOperation');
+
+	return $operation;
 
 }
 

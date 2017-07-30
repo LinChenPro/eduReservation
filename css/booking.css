@@ -76,29 +76,53 @@
 }
 
 
+#lesson_div{
+    user-select: none;
+    cursor: default;
+}
+
 .span_lesson{
+	display: :inline-block;
 	position:absolute;
 	z-index: 201;
 	box-sizing: border-box;	
 	border-radius:4px;
 	font-size: 7.5px;
+
+    user-select: none;
+    cursor: default;
+	border:1px solid green;
 }
 
 .tiers{
 	background-color:#DDD;
-	border:1px solid green;
 }
 
 .mine{
 	background-color:#FFF;
+}
+
+.span_lesson.non_editable{
+}
+
+.span_lesson.editable{
 	border:2px solid green;
 }
 
+.editable.deleting{
+	border:1px solid red;
+	border-style: dashed;
+}
+
+.editable.creating{
+	border:2px solid green;
+	border-style: dashed;
+}
 
 #lesson_detail_span{
 	position:absolute;
 	left : 850px;
-	top : 50px;
+	top : 250px;
 	width:200px;
 	min-height: 200px;
 	display: inline-block;;

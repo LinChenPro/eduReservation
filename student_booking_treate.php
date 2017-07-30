@@ -41,25 +41,6 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 	}
 	$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
 	echo json_encode($responseObj);
-}else if($demand_action==SBK_TYPE_UPDATE){
-		$demand_from_day = $_REQUEST["from_day"];
-		$demand_from_h = $_REQUEST["from_h"];
-		$demand_to_day = $_REQUEST["to_day"];
-		$demand_to_h = $_REQUEST["to_h"];
-		$demand_to_statut = $_REQUEST["to_statut"]-0;
-
-		$responseObj = updateTeacherCalendar(
-			$uid, 
-			$demand_week_nb, 
-			$demand_from_day,
-			$demand_from_h,
-			$demand_to_day,
-			$demand_to_h,
-			$demand_to_statut
-		);
-
-		$responseObj->action = SBK_TYPE_UPDATE;
-		echo json_encode($responseObj);
 }else if($demand_action==SBK_TYPE_REFRESH){
 	$has_change = false;
 	for($i=0; $i<10; $i++){
@@ -90,6 +71,58 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 		$responseObj->infos = "not refreshed"; 
 		echo json_encode($responseObj);	
 	}
+}else if($demand_action==SBK_TYPE_RESTORE){
+		$demand_ope_id = $_REQUEST["ope_id"];
+		$demand_res_id = $_REQUEST["res_id"];
+
+		$restoreResult = restoreReservation($demand_ope_id, $demand_res_id);
+
+		$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
+		$responseObj->action = SBK_TYPE_RESTORE;
+		$responseObj->succes = $restoreResult->succes;
+		$responseObj->error = $restoreResult->error;
+		$responseObj->infos = $restoreResult->infos;
+
+		echo json_encode($responseObj);
+}else if($demand_action==SBK_TYPE_DELETERES){
+		$demand_res_id = $_REQUEST["res_id"];
+
+		$deleteResResult = deleteReservation($demand_res_id);
+
+		$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
+		$responseObj->action = SBK_TYPE_DELETERES;
+		$responseObj->succes = $deleteResResult->succes;
+		$responseObj->error = $deleteResResult->error;
+		$responseObj->infos = $deleteResResult->infos;
+
+		echo json_encode($responseObj);
+}else if($demand_action==SBK_TYPE_CANCELOPE){
+		$demand_ope_id = $_REQUEST["ope_id"];
+
+		$cancelOpeResult = cancelOperation($demand_ope_id);
+
+		$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
+		$responseObj->action = SBK_TYPE_CANCELOPE;
+		$responseObj->succes = $cancelOpeResult->succes;
+		$responseObj->error = $cancelOpeResult->error;
+		$responseObj->infos = $cancelOpeResult->infos;
+
+		echo json_encode($responseObj);
+}else if($demand_action==SBK_TYPE_CREATE){
+		$demand_day_nb = $_REQUEST["day_nb"];
+		$demand_from_h = $_REQUEST["from_h"];
+		$demand_to_h = $_REQUEST["to_h"];
+		$demand_tp_id = $_REQUEST["tp_id"];
+
+		$createOpeResult = createOperation($demand_categ_id, $demand_tid, $demand_sid, $demand_day_nb, $demand_from_h, $demand_to_h, $demand_tp_id);
+
+		$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
+		$responseObj->action = SBK_TYPE_CREATE;
+		$responseObj->succes = $createOpeResult->succes;
+		$responseObj->error = $createOpeResult->error;
+		$responseObj->infos = $createOpeResult->infos;
+
+		echo json_encode($responseObj);
 }
 
 

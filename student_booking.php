@@ -46,7 +46,26 @@ if(!empty($categs)){
 </div>
 <div id="teacher_calendar_div" style="position:relative;">
 	<div id="lesson_div"></div>
-	<span id="lesson_detail_span"></span>
+	<span id="lesson_detail_span">
+		lesson : <span id="focuslesson_categ"></span>
+		<br>
+		day : <span id="focuslesson_day"></span>
+		<br>
+		time : <span id="focuslesson_time"></span>
+		<br>
+		teacher : <span id="focuslesson_teacher"></span>
+		<br>
+		student : <span id="focuslesson_student"></span>
+		<br>
+		statut : <span id="focuslesson_statut"></span>
+		<br>
+		<a id="focuslesson_a_delete" style="display:none" href="javascript:focusLessonDelete()">delete</a> 
+		<a id="focuslesson_a_restore" style="display:none" href="javascript:focusLessonRestore()">restore</a> 
+		<a id="focuslesson_a_cancel" style="display:none" href="javascript:focusLessonCancel()">cancel</a> 
+		<a id="focuslesson_a_move" style="display:none" href="javascript:focusLessonMove()">move</a> 
+		<a id="focuslesson_a_goto" style="display:none" href="javascript:focusLessonGoto()">goto</a> 
+
+	</span>
 	<div id="selection_div" style="z-index:1"></div>
 	<div id="res_poe_detail_div" style="z-index:101"></div>
 	<table id="cal_table" style="z-index:100;position:relative;">
@@ -93,6 +112,11 @@ var crtSchedules = null; // schedule of teacher, removed the times of res and op
 var crtStudentLessons = null; // student's all lessons, with role student or teacher
 var crtTeacherLessonsTies = null; // teacher's all lessons with others, with role student or teacher
 
+var querySucces = null;
+var queryError = null;
+var queryInfos = null;
+
+
 // mouse reaction needed
 var selection_begin = null;
 var selection_end = null;
@@ -116,20 +140,35 @@ var queryGetTeacherLists = null;	// *+
 
 // ajax query objects
 var queryLoad = new AjaxQuery("queryLoad", showScheduleData, autoSBKRefresh, demandeUrl);
-var queryUpdate = new AjaxQuery("queryUpdate", showScheduleData, autoSBKRefresh, demandeUrl);
 var queryRefresh = new AjaxQuery("queryRefresh", showScheduleData, autoSBKRefresh, demandeUrl, true);
 var queryTeacherList = new AjaxQuery("queryTeacherList", feedTeacherSelector, autoSBKRefresh, demandeUrl);
+var queryGotoCategTeacher = new AjaxQuery("queryGotoCategTeacher", gotoSelectedTeacher, autoSBKRefresh, demandeUrl);
+var queryCreate = new AjaxQuery("queryCreate", showScheduleData, autoSBKRefresh, demandeUrl);
+var queryRestore = new AjaxQuery("queryRestore", showScheduleData, autoSBKRefresh, demandeUrl);
+var queryDeleteRes = new AjaxQuery("queryDeleteRes", showScheduleData, autoSBKRefresh, demandeUrl);
+var queryCancelOpe = new AjaxQuery("queryCancelOpe", showScheduleData, autoSBKRefresh, demandeUrl);
+
 
 // ajax request type constants
-var SBK_TYPE_UPDATE = "<?=SBK_TYPE_UPDATE?>";
 var SBK_TYPE_LOAD = "<?=SBK_TYPE_LOAD?>";
 var SBK_TYPE_REFRESH = "<?=SBK_TYPE_REFRESH?>";
 var SBK_TYPE_TEACHERLIST = "<?=SBK_TYPE_TEACHERLIST?>";
+var SBK_TYPE_CREATE = "<?=SBK_TYPE_CREATE?>";
+var SBK_TYPE_RESTORE = "<?=SBK_TYPE_RESTORE?>";
+var SBK_TYPE_DELETERES = "<?=SBK_TYPE_DELETERES?>";
+var SBK_TYPE_CANCELOPE = "<?=SBK_TYPE_CANCELOPE?>";
 
 var LESSON_STATUT_DELETING = "<?=LESSON_STATUT_DELETING?>"
 var LESSON_STATUT_CREATING = "<?=LESSON_STATUT_CREATING?>"
 var LESSON_STATUT_CREATED = "<?=LESSON_STATUT_CREATED?>"
 var LESSON_STATUT_FIXED = "<?=LESSON_STATUT_FIXED?>"
+
+var RES_STATUT_CREATED = "<?=RES_STATUT_CREATED?>"
+var RES_STATUT_DELETING = "<?=RES_STATUT_DELETING?>"
+var RES_STATUT_DELETED = "<?=RES_STATUT_DELETED?>"
+var RES_STATUT_FIXED = "<?=RES_STATUT_FIXED?>"
+var RES_STATUT_ACTIVE = "<?=RES_STATUT_ACTIVE?>"
+var RES_STATUT_FINISHED = "<?=RES_STATUT_FINISHED?>"
 
 
 /************* ajax **************/
@@ -142,21 +181,13 @@ function loadTeachers(){
 	queryTeacherList.sendAjaxQuery(demande);
 }
 
-
-function sentSBKDemand(d1, t1, d2, t2, to_statut){
+function gotoCategTeacher(){
 	var demande = { 
-		'action' : SBK_TYPE_UPDATE, 
-		'categ_id' : categ_id, 
-		'tid' : tid, 
+		'action' : SBK_TYPE_TEACHERLIST, 
 		'sid' : uid,
-		'week_nb' : week_nb, 
-		'from_day': d1,
-		'from_h' : t1,
-		'to_day' : d2,
-		'to_h' : t2, 
-		'to_statut': to_statut 
+		'categ_id': categ_id 
 	};
-	queryUpdate.sendAjaxQuery(demande);
+	queryGotoCategTeacher.sendAjaxQuery(demande);
 }
 
 function loadSBKData(demande_week_nb){
@@ -187,6 +218,57 @@ function autoSBKRefresh(){
 	queryRefresh.sendAjaxQuery(demande);
 }
 
+function createDemand(day_nb, from_h, to_h){
+	var demande = { 
+		'action' : SBK_TYPE_CREATE, 
+		'categ_id' : categ_id, 
+		'tid' : tid, 
+		'sid' : uid,
+		'day_nb' : day_nb,
+		'from_h' : from_h,
+		'to_h' : to_h, 
+		'tp_id' : getTeacherPrise(tid),
+		'week_nb' : week_nb
+	};
+	queryCreate.sendAjaxQuery(demande);
+}
+
+function restoreDemand(ope_id, res_id){
+	var demande = { 
+		'action' : SBK_TYPE_RESTORE, 
+		'ope_id' : ope_id,
+		'res_id' : res_id,
+		'categ_id' : categ_id, 
+		'tid' : tid, 
+		'sid' : uid,
+		'week_nb' : week_nb
+	};
+	queryRestore.sendAjaxQuery(demande);
+}
+
+function deleteResDemand(res_id){
+	var demande = { 
+		'action' : SBK_TYPE_DELETERES, 
+		'res_id' : res_id,
+		'categ_id' : categ_id, 
+		'tid' : tid, 
+		'sid' : uid,
+		'week_nb' : week_nb
+	};
+	queryDeleteRes.sendAjaxQuery(demande);
+}
+
+function cancelOpeDemand(ope_id){
+	var demande = { 
+		'action' : SBK_TYPE_CANCELOPE, 
+		'ope_id' : ope_id,
+		'categ_id' : categ_id, 
+		'tid' : tid, 
+		'sid' : uid,
+		'week_nb' : week_nb
+	};
+	queryCancelOpe.sendAjaxQuery(demande);
+}
 
 function displayVars(responseData){
 	var t = "crtStudentLessons = " + JSON.stringify(crtStudentLessons);
@@ -198,6 +280,27 @@ function displayVars(responseData){
 function feedTeacherSelector(responseData){
 	crtTeacherList = responseData;
 	showDatas();
+}
+
+function gotoSelectedTeacher(responseData){
+	crtTeacherList = responseData;
+	showDatas();
+	$("#teacher_selector").val(tid);
+
+	setTimeout(function(){
+		$("#teacher_selector").change();
+	}, 10);
+}
+
+
+function getTeacherPrise(tid){
+	for(var i=0; i<crtTeacherList.length; i++){
+		var ti = crtTeacherList[i];
+		if(ti.tid == tid){
+			return ti.teacher_prise_id;
+		}
+	}
+	return -1;
 }
 
 function showScheduleData(responseData){
@@ -220,9 +323,12 @@ function showScheduleData(responseData){
 	crtSchedules = responseData["schedule_data"];
 	crtStudentLessons = responseData["crtStudentLessons"];
 	crtTeacherLessonsTies = responseData["crtTeacherLessonsTies"];
-	
-	showDatas();
 
+	querySucces = responseData["succes"];
+	queryError = responseData["error"];
+	queryInfos = responseData["infos"];
+
+	showDatas();
 }
 
 function setCellAttrbuts(day_nb, h, statut, type){
@@ -237,6 +343,23 @@ function setCellAttrbuts(day_nb, h, statut, type){
 
 
 //------------- show lesson -----------
+
+var currentFocusLesson = null;
+var lessonInOperation = false;
+var statut_texts = [];
+var res_statut_texts = [];
+statut_texts[LESSON_STATUT_CREATED] = "created";
+statut_texts[LESSON_STATUT_CREATING] = "creating";
+statut_texts[LESSON_STATUT_DELETING] = "deleting";
+statut_texts[LESSON_STATUT_FIXED] = "fixed";
+res_statut_texts[RES_STATUT_CREATED] = "created";
+res_statut_texts[RES_STATUT_DELETING] = "deleting";
+res_statut_texts[RES_STATUT_DELETED] = "deleted";
+res_statut_texts[RES_STATUT_FIXED] = "fixed";
+res_statut_texts[RES_STATUT_ACTIVE] = "active";
+res_statut_texts[RES_STATUT_FINISHED] = "finished";
+
+
 function showLessonElm(lesson){
 	var spanObj = $('<span class="span_lesson"></span>').appendTo($("#lesson_div"));
 	initView(spanObj, lesson);
@@ -260,7 +383,8 @@ function initView(spanObj, lesson){
 	spanObj.css("left", pos.left).css("top", pos.top).css("width", pos.width).css("height", pos.height);
 	spanObj.addClass(lesson.is_tiers?"tiers":"mine");
 	spanObj.addClass((lesson.tid==uid || lesson.sid==tid)? "role-invers" : null);
-	spanObj.addClass(lesson.editable? "editable" : null);
+	spanObj.addClass(lesson.editable? "editable" : "non_editable");
+	spanObj.addClass(getStatutClass(lesson));
 
 	var text = lesson.t_name == null? "T" : lesson.t_name;
 	text += " " + (lesson.categ_name == null? "lesson" : lesson.categ_name);
@@ -270,19 +394,116 @@ function initView(spanObj, lesson){
 }
 
 function setLessonMouseOver(obj, lesson){
-	obj.mouseover(function(evt){
-		var text = "lesson : "+(lesson.categ_name==null? "" : lesson.categ_name);
-		text +="<br>teacher :" + (lesson.t_name==null? "" : (lesson.tid==uid?"me" : lesson.t_name )); 
-		text +="<br>student :" + (lesson.s_name==null? "" : (lesson.sid==uid?"me" : lesson.s_name )); 
-		$("#lesson_detail_span").html(text);
+	obj.mouseover(function(evt){		
+		currentFocusLesson = lesson;
+		lessonInOperation = true;
+		showDetailSpan();
 	});
 }
 
 function setLessonMouseOut(obj, lesson){
 	obj.mouseout(function(evt){
-		$("#lesson_detail_span").html("");
+		lessonInOperation = false;
+		setTimeout(function(){
+			if(!lessonInOperation){
+				currentFocusLesson = null;
+				showDetailSpan();
+			}
+		}, 1000);
 	});
 }
+
+function showDetailSpan(){
+	if(currentFocusLesson == null){
+		$("#focuslesson_categ").html("");
+		$("#focuslesson_day").html("");
+		$("#focuslesson_time").html("");
+		$("#focuslesson_teacher").html("");
+		$("#focuslesson_student").html("");
+		$("#focuslesson_statut").html("");
+		$("#focuslesson_a_delete").css("display", "none");
+		$("#focuslesson_a_restore").css("display", "none");
+		$("#focuslesson_a_cancel").css("display", "none");
+		$("#focuslesson_a_move").css("display", "none");
+		$("#focuslesson_a_goto").css("display", "none");
+	}else{
+		$("#focuslesson_categ").html(currentFocusLesson.categ_name);
+		$("#focuslesson_day").html(currentFocusLesson.day_text);
+		$("#focuslesson_time").html(currentFocusLesson.time_text);
+		$("#focuslesson_teacher").html(currentFocusLesson.t_name);
+		$("#focuslesson_student").html(currentFocusLesson.s_name);
+		if(!currentFocusLesson.is_tiers){
+			$("#focuslesson_statut").html(getStatutText(currentFocusLesson));
+		}
+
+		$('a[id*="focuslesson_a_"]').css("display", "none");
+		if(currentFocusLesson.editable){
+			var statut = currentFocusLesson.statut;	
+			if(statut==LESSON_STATUT_CREATED){
+				$("#focuslesson_a_delete").css("display", "inline");
+			}
+			if(statut==LESSON_STATUT_DELETING){
+				$("#focuslesson_a_restore").css("display", "inline");
+			}
+			if(statut==LESSON_STATUT_CREATING){
+				$("#focuslesson_a_cancel").css("display", "inline");
+			}
+			if((statut==LESSON_STATUT_CREATED || statut==LESSON_STATUT_CREATING)
+				&& currentFocusLesson.tid == tid){
+				$("#focuslesson_a_move").css("display", "inline");
+			}if(currentFocusLesson.tid!=tid || currentFocusLesson.categ_id!=categ_id){
+				$("#focuslesson_a_goto").css("display", "inline");
+			}
+		}
+	}
+}
+
+function getStatutText(lesson){
+	if(lesson.statut != LESSON_STATUT_FIXED){
+		return statut_texts[lesson.statut];
+	}else{
+		return res_statut_texts[lesson.res_statut];
+	}
+}
+
+function getStatutClass(lesson){
+	return statut_texts[lesson.statut];
+}
+
+function focusLessonDelete(){
+	deleteResDemand(currentFocusLesson.res_id);
+}
+
+function focusLessonRestore(){
+	restoreDemand(currentFocusLesson.ope_id, currentFocusLesson.res_id);
+}
+
+function focusLessonCancel(){
+	cancelOpeDemand(currentFocusLesson.ope_id);
+}
+
+function focusLessonMove(){
+
+}
+
+function focusLessonGoto(){
+	initSelectionVars();
+	clearCrtTeacherData();
+	categ_id = currentFocusLesson.categ_id;
+	tid = currentFocusLesson.tid;
+	$("#categ_selector").val(categ_id);
+	gotoCategTeacher();
+}
+
+
+$("#lesson_detail_span").mouseleave(function(){
+	currentFocusLesson = null;
+	lessonInOperation = false;
+	showDetailSpan();
+}).mouseover(function(){
+	lessonInOperation = true;
+});
+
 
 //-------------------------------------
 
@@ -320,12 +541,6 @@ function showDatas(){
 			showLessonElm(crtStudentLessons[i]);
 		}
 	}
-			// 	var reservation = crtReservations[i];
-			// var d = reservation.day_nb - week_first_day;
-			// var type = "res_"+(reservation.tid==uid?"t":"s");
-			// for(var h=reservation.begin_nb; h<=reservation.end_nb; h++){
-			// 	$("#cal_"+d+"_"+h).attr("data-type", type).attr("data-index", i);
-			// }
 
 	// show teacher tier lessons
 	if(crtTeacherLessonsTies != null){
@@ -338,8 +553,30 @@ function showDatas(){
 	$("#week_title").html(week_nb);
 	showTeacherOptions();
 
+	if(querySucces!=null){
+		if(querySucces==true){
+			showInfos();
+		}else if(querySucces==false){
+			showError();
+		}
+	}
+
 	// for test
 	displayVars();
+}
+
+function showInfos(){
+	if(queryInfos != null){
+		alert(queryInfos);	
+	}
+	querySucces = null;
+}
+
+function showError(){
+	if(queryError != null){
+		alert(queryError);	
+	}
+	querySucces = null;
 }
 
 function showTeacherOptions(){
@@ -363,8 +600,16 @@ function showTeacherOptions(){
 
 /**************     presentation, element reactions     **************/
 $("body").mouseup(function(){
-	isMouseDown = false;
-	showSelection();
+	if(event.target.id == "sendSelect"){ // TODO
+		return;
+	}
+
+	if(isMouseDown){
+		isMouseDown = false;
+		showSelection();
+	}else{
+		initSelectionVars();
+	}
 });
 
 function initSelectionVars(){
@@ -396,8 +641,8 @@ function select_continue(elm){
 }
 
 function select_end(elm){
-	if(isMouseDown){
 		event.stopPropagation();
+	if(isMouseDown){
 		var obj = $(elm);
 		selection_end = {day:obj.attr("data-day"), h:obj.attr("data-h")};
 		isMouseDown = false;
@@ -536,7 +781,6 @@ function clearCrtTeacherData(){
 $("#categ_selector").change(function(){
 	categ_id = this.value == "" ? null : this.value;
 	crtTeacherList = null;
-	clearCrtTeacherData();
 	if(categ_id==null){
 		initSelectionVars();
 		clearCrtTeacherData();
@@ -561,13 +805,16 @@ $("#teacher_selector").change(function(){
 });
 
 $("#sendSelect").click(function(){
+	event.stopPropagation();
+	event.preventDefault();
+
 	if(selection_begin!=null && selection_end!=null){
 		var d_min = Math.min(selection_begin.day, selection_end.day);
 		var d_max = Math.max(selection_begin.day, selection_end.day);
 		var h_min = Math.min(selection_begin.h, selection_end.h);
 		var h_max = Math.max(selection_begin.h, selection_end.h);
 
-		sentSBKDemand(d_min, h_min, d_max, h_max, 1);
+		createDemand(d_min, h_min, h_max);
 	}
 });
 
