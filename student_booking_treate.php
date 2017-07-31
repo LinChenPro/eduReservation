@@ -114,7 +114,8 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 		$demand_to_h = $_REQUEST["to_h"];
 		$demand_tp_id = $_REQUEST["tp_id"];
 
-		$createOpeResult = createOperation($demand_categ_id, $demand_tid, $demand_sid, $demand_day_nb, $demand_from_h, $demand_to_h, $demand_tp_id);
+		$locks = getStampLocks($demand_sid, $demand_week_nb, $demand_tid);
+		$createOpeResult = doTransaction($locks, "createOperation", array($demand_categ_id, $demand_tid, $demand_sid, $demand_day_nb, $demand_from_h, $demand_to_h, $demand_tp_id));
 
 		$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
 		$responseObj->action = SBK_TYPE_CREATE;
@@ -124,5 +125,4 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 
 		echo json_encode($responseObj);
 }
-
 

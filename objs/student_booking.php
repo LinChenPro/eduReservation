@@ -179,9 +179,9 @@ function loadStudentCalendar($tid, $sid, $categ_id, $week_nb){
 }
 
 function createOperation($categ_id, $tid, $sid, $day_nb, $from_h, $to_h, $tp_id){
-	$week_nb = dayNbToWeekNb($day_nb);
+	sleep(10);
 
-	getUsersWeekStamp($week_nb, $sid, $tid);
+	$week_nb = dayNbToWeekNb($day_nb);
 
 	$session_id = getExistSessionId($sid);
 	if($session_id==null){
@@ -199,9 +199,6 @@ function createOperation($categ_id, $tid, $sid, $day_nb, $from_h, $to_h, $tp_id)
 	}	
 
 	addOperationToDB($session_id, "null", $tid, $sid, $categ_id, $tp_id, $week_nb, $day_nb, $from_h, $to_h, "null", OPE_STATUT_TOCREATE);
-
-	updateUserWeekStamp($tid, $week_nb);
-	updateUserWeekStamp($sid, $week_nb);
 
 	return new ActionResult(true, "a new reservation will be created");
 }
