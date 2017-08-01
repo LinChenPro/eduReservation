@@ -8,14 +8,20 @@ $password = "bg_connector_pwd";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
+//$conn->options(MYSQL_OPT_READ_TIMEOUT, 5);
+
 function query($sql){
 	global $conn;
-	$res = $conn->query($sql);
 
-	if(!$res===TRUE){
-		echo  $conn->error;
+	try {
+		$res = $conn->query($sql);
+		if(!$res){
+			return false;
+		}
+		return $res;
+	} catch (Exception $e) {
+		return false;
 	}
-	return $res;
 }
 
 function insertQuery($sql){
@@ -196,12 +202,12 @@ function getStampLocks($uid_1, $week_nb_1, $uid_2=null, $week_nb_2=null){
 }
 
 function blockStamps($locks, $read_only=false){
-	for($i=0; $i<5; $i++){
+	for($i=0; $i<2; $i++){
 		if(blockUserWeeks($read_only, ...$locks)){
 			return true;
 		}
 
-		sleep(3);
+		sleep(1);
 	}
 
 	return false;
@@ -237,7 +243,7 @@ class UserWeekLock{
 }
 
 function doTransaction($locks, $execFun, $params=array()){
-	if(blockStamps($locks)){
+	if(blockStamps($locks)){sleep(10);
 		$funResult = call_user_func_array($execFun, $params);
 		releaseUerWeeks($funResult->succes, ...$locks);
 		return $funResult;
@@ -257,7 +263,7 @@ function blockUserWeeks($is_read_only, ...$locks){
 	$locks = UserWeekLock::sortLock($locks);
 
 	foreach ($locks as $lock) {
-		$rs = $conn->query("select stamp_time from weekly_action_stamp where stamp_uid=$lock->uid and stamp_week_nb=$lock->week_nb".$queryCondition);
+		$rs = query("select stamp_time from weekly_action_stamp where stamp_uid=$lock->uid and stamp_week_nb=$lock->week_nb".$queryCondition);
 		if($rs == false || mysqli_errno($conn)){
 			$conn->rollback();
 			return false;

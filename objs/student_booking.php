@@ -179,8 +179,8 @@ function loadStudentCalendar($tid, $sid, $categ_id, $week_nb){
 }
 
 function createOperation($categ_id, $tid, $sid, $day_nb, $from_h, $to_h, $tp_id){
-	sleep(10);
-
+/*	sleep(12);
+*/
 	$week_nb = dayNbToWeekNb($day_nb);
 
 	$session_id = getExistSessionId($sid);
@@ -215,13 +215,6 @@ function restoreReservation($ope_id, $res_id){
 	$sid = $operation->sid;
 	$tid = $operation->tid;
 
-	if($ope_week_nb==$res_week_nb){
-		getUsersWeekStamp($ope_week_nb, $sid, $tid);
-	}else{
-		getUsersWeekStamp($ope_week_nb, $sid, $tid);
-		getUsersWeekStamp($res_week_nb, $sid, $tid);
-	}
-
 	// confirm teacher schedule
 	if(!confirmTeacherSchedule($tid, $res_day_nb, $res_from_h, $res_to_h)){
 		return new ActionResult(false, null, "This slot is not allowed by the teacher.");
@@ -235,15 +228,6 @@ function restoreReservation($ope_id, $res_id){
 	query("delete from student_operation where ope_id=$ope_id");
 	query("update reservation set res_statut=".RES_STATUT_CREATED." where res_id=$res_id");
 
-	if($ope_week_nb==$res_week_nb){
-		updateUserWeekStamp($tid, $ope_week_nb);
-		updateUserWeekStamp($sid, $ope_week_nb);
-	}else{
-		updateUserWeekStamp($tid, $ope_week_nb);
-		updateUserWeekStamp($sid, $ope_week_nb);
-		updateUserWeekStamp($tid, $res_week_nb);
-		updateUserWeekStamp($sid, $res_week_nb);
-	}
 	return new ActionResult(true, "reservation restored succesfully");
 }
 
@@ -253,8 +237,7 @@ function deleteReservation($res_id){
 	$sid = $reservation->sid;
 	$tid = $reservation->tid;
 
-	getUsersWeekStamp($res_week_nb, $sid, $tid);
-
+	TODO("find better way to treate session");
 	$session_id = getExistSessionId($sid);
 	if($session_id==null){
 		return new ActionResult(false, null, "Your edit session is expired.");
@@ -263,23 +246,16 @@ function deleteReservation($res_id){
 	addOperationToDB($session_id, $res_id, $tid, $sid, $reservation->categ_id, $reservation->tp_id, $res_week_nb, $reservation->day_nb, $reservation->begin_nb, $reservation->end_nb, $reservation->pur_id, OPE_STATUT_TODELETE);
 	query("update reservation set res_statut=".RES_STATUT_DELETING." where res_id=$res_id");
 
-	updateUserWeekStamp($tid, $res_week_nb);
-	updateUserWeekStamp($sid, $res_week_nb);
-
 	return new ActionResult(true, "reservation will be deleted.");
 }
 
 function cancelOperation($ope_id){
-	$operation = getOperationById($ope_id);
+/*	$operation = getOperationById($ope_id);
 	$ope_week_nb = $operation->week_nb;
 	$sid = $operation->sid;
 	$tid = $operation->tid;
-	getUsersWeekStamp($ope_week_nb, $sid, $tid);
-
+*/
 	query("delete from student_operation where ope_id=$ope_id");
-
-	updateUserWeekStamp($tid, $ope_week_nb);
-	updateUserWeekStamp($sid, $ope_week_nb);
 
 	return new ActionResult(true, "creation of reservation is cancelled");
 }

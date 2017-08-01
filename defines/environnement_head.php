@@ -1,8 +1,10 @@
 <?php
 error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
-/** / 
-ini_set("display_errors", "on"); /*/
-ini_set("display_errors", "off"); /**/
+/**/ 
+$debug = 0;
+
+ini_set("display_errors", $debug ? "on" : "off");
+ini_set('max_execution_time', 80);
 
 // require_once('outside_includes/libs.php');
 

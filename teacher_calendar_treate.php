@@ -31,7 +31,8 @@ if($demand_action==TCA_TYPE_LOAD){
 		$demand_to_h = $_REQUEST["to_h"];
 		$demand_to_statut = $_REQUEST["to_statut"]-0;
 
-		$responseObj = updateTeacherCalendar(
+		$locks = getStampLocks($demand_uid, $demand_week_nb);
+		$responseObj = doTransaction($locks, "updateTeacherCalendar", array(
 			$uid, 
 			$demand_week_nb, 
 			$demand_from_day,
@@ -39,8 +40,15 @@ if($demand_action==TCA_TYPE_LOAD){
 			$demand_to_day,
 			$demand_to_h,
 			$demand_to_statut
-		);
+		));
 
+		if(!$responseObj->succes){
+			$currentCalendar = loadTeacherCalendar($demand_uid, $demand_week_nb);
+			$currentCalendar->succes = $responseObj->succes;
+			$currentCalendar->error = $responseObj->error;
+			$currentCalendar->infos = $responseObj->infos;
+			$responseObj = $currentCalendar;
+		}
 		$responseObj->action = TCA_TYPE_UPDATE;
 		echo json_encode($responseObj);
 }else if($demand_action==TCA_TYPE_REFRESH){

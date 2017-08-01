@@ -28,6 +28,7 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 	if(empty($demand_categ_id)){
 		echo json_encode(array());
 	}else{
+		// no need to block, but maybe need a time stamp to read the update.
 		$responseObj = getCurrentCategTeachers($demand_categ_id, $demand_sid, $currentSession->session_create_time);
 		if($responseObj==null){
 			$responseObj = array();
@@ -40,6 +41,11 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 		$demand_week_nb = dateToWeekNb();
 	}
 	$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
+
+	// no need to block reading.
+//	$locks = getStampLocks($demand_sid, $demand_week_nb, $demand_tid);
+//	$responseObj = doTransaction($locks, "loadStudentCalendar", array($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb));
+
 	echo json_encode($responseObj);
 }else if($demand_action==SBK_TYPE_REFRESH){
 	$has_change = false;
@@ -55,6 +61,7 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 	}
 
 	if($has_change){
+		// no need to block
 		$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
 		$responseObj->action = SBK_TYPE_REFRESH;
 		echo json_encode($responseObj);
@@ -75,7 +82,9 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 		$demand_ope_id = $_REQUEST["ope_id"];
 		$demand_res_id = $_REQUEST["res_id"];
 
-		$restoreResult = restoreReservation($demand_ope_id, $demand_res_id);
+		//missing params : $demand_week_ope, $demand_lesson_tid, $demand_week_res
+		$locks = getStampLocks($demand_sid, $demand_week_ope, $demand_tid, $demand_week_res);
+		$restoreResult = doTransaction($locks, "restoreReservation", array($demand_ope_id, $demand_res_id));
 
 		$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
 		$responseObj->action = SBK_TYPE_RESTORE;
@@ -87,7 +96,9 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 }else if($demand_action==SBK_TYPE_DELETERES){
 		$demand_res_id = $_REQUEST["res_id"];
 
-		$deleteResResult = deleteReservation($demand_res_id);
+		//missing params : $demand_week_res, $demand_lesson_tid
+		$locks = getStampLocks($demand_sid, $demand_week_res, $demand_tid);
+		$deleteResResult = doTransaction($locks, "deleteReservation", array($demand_res_id));
 
 		$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
 		$responseObj->action = SBK_TYPE_DELETERES;
@@ -99,7 +110,9 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 }else if($demand_action==SBK_TYPE_CANCELOPE){
 		$demand_ope_id = $_REQUEST["ope_id"];
 
-		$cancelOpeResult = cancelOperation($demand_ope_id);
+		//missing params : $demand_week_ope, $demand_lesson_tid
+		$locks = getStampLocks($demand_sid, $demand_week_ope, $demand_lesson_tid);
+		$cancelOpeResult = doTransaction($locks, "cancelOperation", array($demand_ope_id));
 
 		$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
 		$responseObj->action = SBK_TYPE_CANCELOPE;
