@@ -182,6 +182,10 @@ function showScheduleData(responseData){
 
 	$("#week_title").html(responseData.week_nb);
 	$("#showData").html(JSON.stringify(responseData));
+
+	if(!responseData.succes){
+		alert(responseData.error);
+	}
 }
 
 

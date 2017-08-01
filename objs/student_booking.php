@@ -49,7 +49,9 @@ class StudentCalendarResponse{
 define("LESSON_STATUT_DELETING", 1);
 define("LESSON_STATUT_CREATING", 2);
 define("LESSON_STATUT_CREATED", 3);
-define("LESSON_STATUT_FIXED", 4);
+define("LESSON_STATUT_MOVEDAWAY", 4);
+define("LESSON_STATUT_MOVEDHERE", 5);
+define("LESSON_STATUT_FIXED", 6);
 
 
 class Lesson{
@@ -62,6 +64,8 @@ class Lesson{
 	public $s_name;
 	public $categ_id;
 	public $categ_name;
+	public $res_week;
+	public $ope_week;
 	public $day_nb;
 	public $begin_h;
 	public $end_h;
@@ -100,14 +104,20 @@ function operationToLesson($operation, $crt_tid, $crt_sid){
 	$lesson->s_name = $operation->s_name;
 	$lesson->categ_id = $operation->categ_id;
 	$lesson->categ_name = $operation->categ_name;
+	$lesson->res_week = $operation->res_week_nb;
+	$lesson->ope_week = $operation->week_nb;
 	$lesson->day_nb = $operation->day_nb;
 	$lesson->begin_h = $operation->begin_nb;
 	$lesson->end_h = $operation->end_nb;
 	$lesson->day_text = dayNbToStr($operation->day_nb);
 	$lesson->time_text = hNbToCreneax($operation->begin_nb, $operation->end_nb);
-	$lesson->statut = $operation->statut==0 ? LESSON_STATUT_DELETING : LESSON_STATUT_CREATING;
-	$lesson->res_statut = $operation->statut==0 ? RES_STATUT_DELETING : null;
-
+	$lesson->statut = $operation->statut==OPE_STATUT_TODELETE ? LESSON_STATUT_DELETING : (
+		$operation->statut==OPE_STATUT_TOMOVE ? LESSON_STATUT_MOVEDHERE : LESSON_STATUT_CREATING
+	);
+	$lesson->res_statut = $operation->statut==OPE_STATUT_TODELETE ? RES_STATUT_DELETING : (
+		$operation->statut==OPE_STATUT_TOMOVE ? RES_STATUT_MOVING : null
+	);
+	
 	$lesson->formalisation($crt_tid, $crt_sid);
 	return $lesson;
 }
@@ -115,19 +125,24 @@ function operationToLesson($operation, $crt_tid, $crt_sid){
 function reservationToLesson($reservation, $crt_tid, $crt_sid){
 	$lesson = new Lesson();
 	$lesson->res_id = $reservation->res_id;
-	$lesson->ope_id = null;
+	$lesson->ope_id = $reservation->ope_id;;
 	$lesson->tid = $reservation->tid;
 	$lesson->t_name = $reservation->t_name;
 	$lesson->sid = $reservation->sid;
 	$lesson->s_name = $reservation->s_name;
 	$lesson->categ_id = $reservation->categ_id;
 	$lesson->categ_name = $reservation->categ_name;
+	$lesson->res_week = $reservation->week_nb;
+	$lesson->ope_week = $reservation->ope_week_nb;
 	$lesson->day_nb = $reservation->day_nb;
 	$lesson->begin_h = $reservation->begin_nb;
 	$lesson->end_h = $reservation->end_nb;
 	$lesson->day_text = dayNbToStr($reservation->day_nb);
 	$lesson->time_text = hNbToCreneax($reservation->begin_nb, $reservation->end_nb);
-	$lesson->statut = $reservation->statut==RES_STATUT_CREATED ? LESSON_STATUT_CREATED : LESSON_STATUT_FIXED;
+	$lesson->statut = $reservation->statut==RES_STATUT_CREATED ? LESSON_STATUT_CREATED : (
+		$reservation->statut==RES_STATUT_MOVING ? LESSON_STATUT_MOVEDAWAY : LESSON_STATUT_FIXED
+	);
+
 	$lesson->res_statut = $reservation->statut;
 
 	$lesson->formalisation($crt_tid, $crt_sid);
@@ -243,6 +258,7 @@ function deleteReservation($res_id){
 		return new ActionResult(false, null, "Your edit session is expired.");
 	}
 
+	query("delete from student_operation where ope_res_id=$res_id");
 	addOperationToDB($session_id, $res_id, $tid, $sid, $reservation->categ_id, $reservation->tp_id, $res_week_nb, $reservation->day_nb, $reservation->begin_nb, $reservation->end_nb, $reservation->pur_id, OPE_STATUT_TODELETE);
 	query("update reservation set res_statut=".RES_STATUT_DELETING." where res_id=$res_id");
 

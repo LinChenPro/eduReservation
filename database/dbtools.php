@@ -243,7 +243,7 @@ class UserWeekLock{
 }
 
 function doTransaction($locks, $execFun, $params=array()){
-	if(blockStamps($locks)){sleep(10);
+	if(blockStamps($locks)){
 		$funResult = call_user_func_array($execFun, $params);
 		releaseUerWeeks($funResult->succes, ...$locks);
 		return $funResult;

@@ -116,10 +116,16 @@ So the atomic opreation begin with the update of this table.
 current progress : 
 finish principal booking functions, 
 task rest:
-	the moving function, better creation and better detail span.
+	the moving function, 
+	better creation and better detail span.
 	data level : 
 		should better manage teacher prise and categ availability, and bending time of prise-operation.
-		the data lock at DB is not exit yet.
+
+thingking : do we realy need lock for actions like restore, delete, cancel? we should need lock for load?
 
 next step:
+demande for week-uid lock in one sql query
+
+show movedaway and movedhere lessons, add move function on data level, add button to move a lesson 5h forword to test move-restore function
+
 submit operations to do the payment, then create the reservations.(with the manipulation of session statut)

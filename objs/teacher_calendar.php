@@ -109,6 +109,7 @@ define("RES_STATUT_FINISHED", 7);
 
 class Reservation{
 	public $res_id;
+	public $ope_id;
 	public $tid;
 	public $t_name;
 	public $sid;
@@ -116,6 +117,7 @@ class Reservation{
 	public $categ_id;
 	public $categ_name;
 	public $week_nb;
+	public $ope_week_nb;
 	public $day_nb;
 	public $begin_nb;
 	public $end_nb;
@@ -129,6 +131,7 @@ class Reservation{
 function dbLineToReservation($row){
 	$reservation = new Reservation();
 	$reservation->res_id = $row["res_id"];
+	$reservation->ope_id = $row["ope_id"];
 	$reservation->tid = $row["res_tid"];
 	$reservation->t_name = $row["t_name"];
 	$reservation->sid = $row["res_sid"];
@@ -136,6 +139,7 @@ function dbLineToReservation($row){
 	$reservation->categ_id = $row["res_categ_id"];
 	$reservation->categ_name = $row["categ_name"];
 	$reservation->week_nb = $row["res_week_nb"];
+	$reservation->ope_week_nb = $row["ope_week_nb"];
 	$reservation->day_nb = $row["res_day_nb"];
 	$reservation->begin_nb = $row["res_begin_nb"];
 	$reservation->end_nb = $row["res_end_nb"];
@@ -146,8 +150,9 @@ function dbLineToReservation($row){
 }
 
 function getUserReservations($uid, $week_nb, ...$clauses){
-	$sql = "select reservation.*, t.user_name as t_name, s.user_name as s_name, c.categ_name as categ_name "
-		."from reservation, users as t, users as s, categories as c "
+	$sql = "select reservation.*, o.ope_id as ope_id, o.ope_week_nb as ope_week_nb, t.user_name as t_name, s.user_name as s_name, c.categ_name as categ_name "
+		."from users as t, users as s, categories as c, reservation "
+		."left join student_operation as o on ope_res_id=res_id "
 		."where t.user_id=res_tid and s.user_id=res_sid and c.categ_id=res_categ_id "
 		."and res_week_nb=$week_nb "
 		."and res_statut not in(".RES_STATUT_DELETING.",".RES_STATUT_DELETED.") "
@@ -162,8 +167,9 @@ function getUserReservations($uid, $week_nb, ...$clauses){
 }
 
 function getReservationById($res_id, ...$clauses){
-	$sql = "select reservation.*, t.user_name as t_name, s.user_name as s_name, c.categ_name as categ_name "
-		."from reservation, users as t, users as s, categories as c "
+	$sql = "select reservation.*, o.ope_id as ope_id, o.ope_week_nb as ope_week_nb, t.user_name as t_name, s.user_name as s_name, c.categ_name as categ_name "
+		."from users as t, users as s, categories as c, reservation "
+		."left join student_operation as o on ope_res_id=res_id "
 		."where res_id=$res_id and t.user_id=res_tid and s.user_id=res_sid and c.categ_id=res_categ_id ";
 	if(!empty($clauses)){
 		$sql .= concat(" and ", " and ", ...$clauses);
@@ -177,8 +183,9 @@ function getReservationById($res_id, ...$clauses){
 
 
 /* --------------------------------------------------------------- */
-define("OPE_STATUT_TOCREATE", 1);
 define("OPE_STATUT_TODELETE", 0);
+define("OPE_STATUT_TOCREATE", 1);
+define("OPE_STATUT_TOMOVE", 2);
 
 class Operation{
 	public $ope_id;
@@ -207,6 +214,7 @@ function dbLineToOperation($row){
 		$operation->categ_id = $row["ope_categ_id"];
 		$operation->categ_name = $row["categ_name"];
 		$operation->week_nb = $row["ope_week_nb"];
+		$operation->res_week_nb = $row["res_week_nb"];
 		$operation->day_nb = $row["ope_day_nb"];
 		$operation->begin_nb = $row["ope_begin_nb"];
 		$operation->end_nb = $row["ope_end_nb"];
@@ -215,8 +223,9 @@ function dbLineToOperation($row){
 }
 
 function getUserOperations($uid, $week_nb, ...$clauses){
-	$sql = "select student_operation.*, t.user_name as t_name, s.user_id as sid, s.user_name as s_name, c.categ_name as categ_name "
-		."from student_operation, student_session, users as t, users as s, categories as c "
+	$sql = "select student_operation.*, r.res_week_nb as res_week_nb, t.user_name as t_name, s.user_id as sid, s.user_name as s_name, c.categ_name as categ_name "
+		."from student_session, users as t, users as s, categories as c, student_operation "
+		."left join reservation as r on ope_res_id=res_id "
 		."where ope_session_id=session_id and session_expire_time>=CURRENT_TIMESTAMP "
 		."and t.user_id=ope_tid and s.user_id=session_sid and c.categ_id=ope_categ_id "
 		."and ope_week_nb=$week_nb "
@@ -232,8 +241,9 @@ function getUserOperations($uid, $week_nb, ...$clauses){
 }
 
 function getOperationById($ope_id, ...$clauses){
-	$sql = "select student_operation.*, t.user_name as t_name, s.user_id as sid, s.user_name as s_name, c.categ_name as categ_name "
-		."from student_operation, student_session, users as t, users as s, categories as c "
+	$sql = "select student_operation.*, r.res_week_nb as res_week_nb, t.user_name as t_name, s.user_id as sid, s.user_name as s_name, c.categ_name as categ_name "
+		."from student_session, users as t, users as s, categories as c, student_operation "
+		."left join reservation as r on ope_res_id=res_id "
 		."where ope_session_id=session_id and session_expire_time>=CURRENT_TIMESTAMP "
 		."and t.user_id=ope_tid and s.user_id=session_sid and c.categ_id=ope_categ_id "
 		."and ope_id=$ope_id";

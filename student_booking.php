@@ -161,11 +161,14 @@ var SBK_TYPE_CANCELOPE = "<?=SBK_TYPE_CANCELOPE?>";
 var LESSON_STATUT_DELETING = "<?=LESSON_STATUT_DELETING?>"
 var LESSON_STATUT_CREATING = "<?=LESSON_STATUT_CREATING?>"
 var LESSON_STATUT_CREATED = "<?=LESSON_STATUT_CREATED?>"
+var LESSON_STATUT_MOVEDAWAY = "<?=LESSON_STATUT_MOVEDAWAY?>"
+var LESSON_STATUT_MOVEDHERE = "<?=LESSON_STATUT_MOVEDHERE?>"
 var LESSON_STATUT_FIXED = "<?=LESSON_STATUT_FIXED?>"
 
 var RES_STATUT_CREATED = "<?=RES_STATUT_CREATED?>"
 var RES_STATUT_DELETING = "<?=RES_STATUT_DELETING?>"
 var RES_STATUT_DELETED = "<?=RES_STATUT_DELETED?>"
+var RES_STATUT_MOVING = "<?=RES_STATUT_MOVING?>"
 var RES_STATUT_FIXED = "<?=RES_STATUT_FIXED?>"
 var RES_STATUT_ACTIVE = "<?=RES_STATUT_ACTIVE?>"
 var RES_STATUT_FINISHED = "<?=RES_STATUT_FINISHED?>"
@@ -233,39 +236,52 @@ function createDemand(day_nb, from_h, to_h){
 	queryCreate.sendAjaxQuery(demande);
 }
 
-function restoreDemand(ope_id, res_id){
+function restoreDemand(ope_id, res_id, lesson_tid, lesson_sid, ope_week, res_week){
 	var demande = { 
 		'action' : SBK_TYPE_RESTORE, 
-		'ope_id' : ope_id,
-		'res_id' : res_id,
 		'categ_id' : categ_id, 
 		'tid' : tid, 
 		'sid' : uid,
-		'week_nb' : week_nb
+		'week_nb' : week_nb,
+
+		'lesson_tid' : lesson_tid, 
+		'lesson_sid' : lesson_sid,
+		'lesson_ope_id' : ope_id,
+		'lesson_res_id' : res_id,
+		'lesson_ope_week' : ope_week,
+		'lesson_res_week' : res_week
 	};
 	queryRestore.sendAjaxQuery(demande);
 }
 
-function deleteResDemand(res_id){
+function deleteResDemand(res_id, lesson_tid, lesson_sid, res_week){
 	var demande = { 
 		'action' : SBK_TYPE_DELETERES, 
-		'res_id' : res_id,
 		'categ_id' : categ_id, 
 		'tid' : tid, 
 		'sid' : uid,
-		'week_nb' : week_nb
+		'week_nb' : week_nb,
+
+		'lesson_tid' : lesson_tid, 
+		'lesson_sid' : lesson_sid,
+		'lesson_res_id' : res_id,
+		'lesson_res_week' : res_week
 	};
 	queryDeleteRes.sendAjaxQuery(demande);
 }
 
-function cancelOpeDemand(ope_id){
+function cancelOpeDemand(ope_id, lesson_tid, lesson_sid, ope_week){
 	var demande = { 
 		'action' : SBK_TYPE_CANCELOPE, 
-		'ope_id' : ope_id,
 		'categ_id' : categ_id, 
 		'tid' : tid, 
 		'sid' : uid,
-		'week_nb' : week_nb
+		'week_nb' : week_nb,
+
+		'lesson_tid' : lesson_tid, 
+		'lesson_sid' : lesson_sid,
+		'lesson_ope_id' : ope_id,
+		'lesson_ope_week' : ope_week
 	};
 	queryCancelOpe.sendAjaxQuery(demande);
 }
@@ -351,10 +367,13 @@ var res_statut_texts = [];
 statut_texts[LESSON_STATUT_CREATED] = "created";
 statut_texts[LESSON_STATUT_CREATING] = "creating";
 statut_texts[LESSON_STATUT_DELETING] = "deleting";
+statut_texts[LESSON_STATUT_MOVEDAWAY] = "movedaway";
+statut_texts[LESSON_STATUT_MOVEDHERE] = "movedhere";
 statut_texts[LESSON_STATUT_FIXED] = "fixed";
 res_statut_texts[RES_STATUT_CREATED] = "created";
 res_statut_texts[RES_STATUT_DELETING] = "deleting";
 res_statut_texts[RES_STATUT_DELETED] = "deleted";
+res_statut_texts[RES_STATUT_MOVING] = "MOVING";
 res_statut_texts[RES_STATUT_FIXED] = "fixed";
 res_statut_texts[RES_STATUT_ACTIVE] = "active";
 res_statut_texts[RES_STATUT_FINISHED] = "finished";
@@ -471,15 +490,32 @@ function getStatutClass(lesson){
 }
 
 function focusLessonDelete(){
-	deleteResDemand(currentFocusLesson.res_id);
+	deleteResDemand(
+		currentFocusLesson.res_id, 
+		currentFocusLesson.tid, 
+		currentFocusLesson.sid, 
+		currentFocusLesson.res_week
+	);
 }
 
 function focusLessonRestore(){
-	restoreDemand(currentFocusLesson.ope_id, currentFocusLesson.res_id);
+	restoreDemand(
+		currentFocusLesson.ope_id, 
+		currentFocusLesson.res_id,
+		currentFocusLesson.tid, 
+		currentFocusLesson.sid,
+		currentFocusLesson.ope_week,
+		currentFocusLesson.res_week
+		);
 }
 
 function focusLessonCancel(){
-	cancelOpeDemand(currentFocusLesson.ope_id);
+	cancelOpeDemand(
+		currentFocusLesson.ope_id, 
+		currentFocusLesson.tid, 
+		currentFocusLesson.sid,
+		currentFocusLesson.ope_week,
+	);
 }
 
 function focusLessonMove(){
