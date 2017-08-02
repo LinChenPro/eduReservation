@@ -87,8 +87,9 @@
 	z-index: 201;
 	box-sizing: border-box;	
 	border-radius:4px;
-	font-size: 7.5px;
-
+	font-size: 10.5px;
+	padding:2px;
+	
     user-select: none;
     cursor: default;
 	border:1px solid green;
@@ -109,13 +110,23 @@
 	border:2px solid green;
 }
 
+.editable.movedaway{
+	border:1px solid green;
+	border-style: dashed;
+}
+
+.editable.movedhere{
+	border:2px solid #108010;
+	border-style: dashed;
+}
+
 .editable.deleting{
 	border:1px solid red;
 	border-style: dashed;
 }
 
 .editable.creating{
-	border:2px solid green;
+	border:2px solid #70c070;
 	border-style: dashed;
 }
 

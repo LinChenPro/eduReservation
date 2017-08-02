@@ -147,7 +147,7 @@ var queryCreate = new AjaxQuery("queryCreate", showScheduleData, autoSBKRefresh,
 var queryRestore = new AjaxQuery("queryRestore", showScheduleData, autoSBKRefresh, demandeUrl);
 var queryDeleteRes = new AjaxQuery("queryDeleteRes", showScheduleData, autoSBKRefresh, demandeUrl);
 var queryCancelOpe = new AjaxQuery("queryCancelOpe", showScheduleData, autoSBKRefresh, demandeUrl);
-
+var queryMoveLesson = new AjaxQuery("queryMoveLesson", showScheduleData, autoSBKRefresh, demandeUrl);
 
 // ajax request type constants
 var SBK_TYPE_LOAD = "<?=SBK_TYPE_LOAD?>";
@@ -157,6 +157,7 @@ var SBK_TYPE_CREATE = "<?=SBK_TYPE_CREATE?>";
 var SBK_TYPE_RESTORE = "<?=SBK_TYPE_RESTORE?>";
 var SBK_TYPE_DELETERES = "<?=SBK_TYPE_DELETERES?>";
 var SBK_TYPE_CANCELOPE = "<?=SBK_TYPE_CANCELOPE?>";
+var SBK_TYPE_MOVE = "<?=SBK_TYPE_MOVE?>";
 
 var LESSON_STATUT_DELETING = "<?=LESSON_STATUT_DELETING?>"
 var LESSON_STATUT_CREATING = "<?=LESSON_STATUT_CREATING?>"
@@ -284,6 +285,27 @@ function cancelOpeDemand(ope_id, lesson_tid, lesson_sid, ope_week){
 		'lesson_ope_week' : ope_week
 	};
 	queryCancelOpe.sendAjaxQuery(demande);
+}
+
+function moveLesson(ope_id, res_id, lesson_tid, lesson_sid, orig_week, dest_week, dest_day_nb, dest_begin_h, dest_end_h){
+	var demande = { 
+		'action' : SBK_TYPE_MOVE, 
+		'categ_id' : categ_id, 
+		'tid' : tid, 
+		'sid' : uid,
+		'week_nb' : week_nb,
+
+		'lesson_tid' : lesson_tid, 
+		'lesson_sid' : lesson_sid,
+		'lesson_ope_id' : ope_id,
+		'lesson_res_id' : res_id,
+		'orig_week' : orig_week,
+		'dest_week' : dest_week,
+		'dest_day_nb' : dest_day_nb,
+		'dest_begin_h' : dest_begin_h,
+		'dest_end_h' : dest_end_h
+	};
+	queryMoveLesson.sendAjaxQuery(demande);
 }
 
 function displayVars(responseData){
@@ -461,13 +483,13 @@ function showDetailSpan(){
 			if(statut==LESSON_STATUT_CREATED){
 				$("#focuslesson_a_delete").css("display", "inline");
 			}
-			if(statut==LESSON_STATUT_DELETING){
+			if(statut==LESSON_STATUT_DELETING || statut==LESSON_STATUT_MOVEDHERE || statut==LESSON_STATUT_MOVEDAWAY){
 				$("#focuslesson_a_restore").css("display", "inline");
 			}
 			if(statut==LESSON_STATUT_CREATING){
 				$("#focuslesson_a_cancel").css("display", "inline");
 			}
-			if((statut==LESSON_STATUT_CREATED || statut==LESSON_STATUT_CREATING)
+			if((statut==LESSON_STATUT_CREATED || statut==LESSON_STATUT_CREATING || statut==LESSON_STATUT_MOVEDHERE)
 				&& currentFocusLesson.tid == tid){
 				$("#focuslesson_a_move").css("display", "inline");
 			}if(currentFocusLesson.tid!=tid || currentFocusLesson.categ_id!=categ_id){
@@ -519,6 +541,41 @@ function focusLessonCancel(){
 }
 
 function focusLessonMove(){
+	// TODO: to move mode, waite selection, then do the action follow:
+
+	var dest_week;
+	if(currentFocusLesson.statut == LESSON_STATUT_CREATING || currentFocusLesson.statut == LESSON_STATUT_MOVEDHERE){
+		orig_week = currentFocusLesson.ope_week;
+	}else{
+		orig_week = currentFocusLesson.res_week;
+	}
+
+	/* test destination */
+	var dest_begin_h = currentFocusLesson.begin_h-0+20;
+	var dest_end_h = currentFocusLesson.end_h-0+20;
+	while(dest_begin_h<48 && dest_end_h>=48){
+		dest_begin_h++;
+		dest_end_h++;
+	}
+	var dest_day_nb = currentFocusLesson.day_nb;
+	if(dest_begin_h>=48){
+		dest_begin_h = dest_begin_h % 48;
+		dest_end_h = dest_end_h % 48;
+		dest_day_nb -= -1;
+	}
+	var dest_week = (dest_day_nb-(dest_day_nb%7))/7;
+
+	moveLesson(
+		currentFocusLesson.ope_id, 
+		currentFocusLesson.res_id,
+		currentFocusLesson.tid, 
+		currentFocusLesson.sid,
+		orig_week,
+		dest_week,
+		dest_day_nb,
+		dest_begin_h,
+		dest_end_h
+	);
 
 }
 

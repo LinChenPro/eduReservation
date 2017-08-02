@@ -6,6 +6,8 @@ define("SBK_TYPE_CREATE", "create_ope");
 define("SBK_TYPE_RESTORE", "restore");
 define("SBK_TYPE_DELETERES", "delete_res");
 define("SBK_TYPE_CANCELOPE", "cancel_ope");
+define("SBK_TYPE_MOVE", "move_lesson");
+
 
 class ActionResult{
 	public $succes;
@@ -218,6 +220,40 @@ function createOperation($categ_id, $tid, $sid, $day_nb, $from_h, $to_h, $tp_id)
 	return new ActionResult(true, "a new reservation will be created");
 }
 
+function moveLessonTo($ope_id, $res_id, $tid, $sid, $dest_week_nb, $dest_day_nb, $dest_begin_h, $dest_end_h){
+	// confirm teacher schedule
+	if(!confirmTeacherSchedule($tid, $dest_day_nb, $dest_begin_h, $dest_end_h)){
+		return new ActionResult(false, null, "This slot is not allowed by the teacher.");
+	}
+
+	// confirm conflict ope and res
+	if(!confirmConflictResOpe($tid, $sid, $dest_day_nb, $dest_begin_h, $dest_end_h)){
+		return new ActionResult(false, null, "This slot is already occupied.");
+	}	
+
+	if(!empty($ope_id)){
+		query("update student_operation set ope_week_nb=$dest_week_nb, ope_day_nb=$dest_day_nb, ope_begin_nb=$dest_begin_h, ope_end_nb=$dest_end_h where ope_id=$ope_id");
+		return new ActionResult(true, "Lesson is rescheduled");
+	}else{
+		$reservation = getReservationById($res_id);
+		$sid = $reservation->sid;
+		$tid = $reservation->tid;
+
+		TODO("find better way to treate session");
+		$session_id = getExistSessionId($sid);
+		if($session_id==null){
+			return new ActionResult(false, null, "Your edit session is expired.");
+		}
+
+		query("delete from student_operation where ope_res_id=$res_id");
+		addOperationToDB($session_id, $res_id, $tid, $sid, $reservation->categ_id, $reservation->tp_id, $dest_week_nb, $dest_day_nb, $dest_begin_h, $dest_end_h, $reservation->pur_id, OPE_STATUT_TOMOVE);
+		query("update reservation set res_statut=".RES_STATUT_MOVING." where res_id=$res_id");
+
+		return new ActionResult(true, "Reservation will be rescheduled.");
+				
+	}
+}
+
 function restoreReservation($ope_id, $res_id){
 	$operation = getOperationById($ope_id);
 	$reservation = getReservationById($res_id);
@@ -227,8 +263,8 @@ function restoreReservation($ope_id, $res_id){
 	$res_day_nb = $reservation->day_nb;
 	$res_from_h = $reservation->begin_nb;
 	$res_to_h = $reservation->end_nb;
-	$sid = $operation->sid;
-	$tid = $operation->tid;
+	$sid = $reservation->sid;
+	$tid = $reservation->tid;
 
 	// confirm teacher schedule
 	if(!confirmTeacherSchedule($tid, $res_day_nb, $res_from_h, $res_to_h)){

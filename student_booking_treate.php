@@ -78,6 +78,30 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 		$responseObj->infos = "not refreshed"; 
 		echo json_encode($responseObj);	
 	}
+}else if($demand_action==SBK_TYPE_MOVE){
+		$lesson_tid = $_REQUEST["lesson_tid"];
+		$lesson_sid = $_REQUEST["lesson_sid"];
+		$lesson_ope_id = $_REQUEST["lesson_ope_id"];
+		$lesson_res_id = $_REQUEST["lesson_res_id"];
+		$orig_week = $_REQUEST["orig_week"];
+		$dest_week = $_REQUEST["dest_week"];
+		$dest_day_nb = $_REQUEST["dest_day_nb"];
+		$dest_begin_h = $_REQUEST["dest_begin_h"];
+		$dest_end_h = $_REQUEST["dest_end_h"];
+
+
+
+		//missing params : $demand_week_ope, $demand_lesson_tid, $demand_week_res
+		$locks = getStampLocks($lesson_tid, $orig_week, $lesson_sid, $dest_week);
+		$restoreResult = doTransaction($locks, "moveLessonTo", array($lesson_ope_id, $lesson_res_id, $lesson_tid, $lesson_sid, $dest_week, $dest_day_nb, $dest_begin_h, $dest_end_h));
+
+		$responseObj = loadStudentCalendar($demand_tid, $demand_sid, $demand_categ_id, $demand_week_nb);
+		$responseObj->action = SBK_TYPE_MOVE;
+		$responseObj->succes = $restoreResult->succes;
+		$responseObj->error = $restoreResult->error;
+		$responseObj->infos = $restoreResult->infos;
+
+		echo json_encode($responseObj);
 }else if($demand_action==SBK_TYPE_RESTORE){
 		$lesson_tid = $_REQUEST["lesson_tid"];
 		$lesson_sid = $_REQUEST["lesson_sid"];
