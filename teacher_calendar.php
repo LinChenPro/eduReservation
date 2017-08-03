@@ -148,7 +148,8 @@ function showScheduleData(responseData){
 			.attr("data-day", schedule.day_nb)
 			.attr("data-h", h)
 			.html(schedule.day_nb + " - " + h)
-			.attr("data-type", "");
+			.attr("data-index", null)
+			.attr("data-type", null);
 		}
 	}
 

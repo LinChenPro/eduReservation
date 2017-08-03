@@ -118,7 +118,7 @@ finish principal booking functions,
 task rest:
 	better creation, moving, and better view of detail span.
 	data level : 
-		should better manage teacher prise and categ availability, and bending time of prise-operation.
+		find better bending moment of prise-operation.
 
 thingking : 
 	do we realy need lock for actions like restore, delete, cancel? we should need lock for load?
