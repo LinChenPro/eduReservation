@@ -128,4 +128,84 @@ next step:
 demande for week-uid lock in one sql query
 update reservation status when operations are expired
 
+
+======================================================
 submit operations to do the payment, then create the reservations.(with the manipulation of session statut)
+
+
+1. booking_resume.php 
+
+(calcul by session and compte situations)
+
+you have xxx on your compte.
+you have the follow purchases:
+date teacher categ prise total consume rest
+
+---------------------
+after the cancel of the follow lessons:
+date teacher categ n lessons, h hours, rembourse to purchase 
+date teacher categ n lessons, h hours, rembourse to your compte
+
+you will have xxx on your compte.
+you have the follow purchases:
+date teacher categ prise total consume rest
+----------------------
+
+you have selected the new lessons as follow, you may select the payment mode for them:
+teacher categ n lesson, h hours :  type_purchase(h hours, prise)		compte solde(rest)		payment rest
+teacher categ n lesson, h hours :  type_purchase(h hours, prise)		compte solde(rest)		payment rest
+teacher categ n lesson, h hours :  type_purchase(h hours, prise)		compte solde(rest)		payment rest
+teacher categ n lesson, h hours :  type_purchase(h hours, prise)		compte solde(rest)		payment rest
+
+-----------------------
+you need to pay : xxxx  select payment type: wechat/card [button payment]
+
+
+
+
+2 booking_payment.php
+(change session status to waiting payment)
+
+payment procedules
+
+(simuler buttons)
+[good payment]  [bad payment]
+
+
+(all payment page should add a control segment to goto right page by session statut)
+
+3 booking_payment_result.php
+
+(get simuleted result of payment) (in real:do payment and reseive result safely)
+
+(change session status to payment succes or payment failled)
+
+if(succes){
+	change operations to reservation, add history
+
+	"your payment is accepted."
+
+	[confirm button]
+}
+
+if(failled){
+	cancel the new lesson operations
+
+	"your payment is refused. all the new lessons will not be added"
+	"do you want to do the cancel and move operation(the will not be done by default)"?
+
+	do cancel  y/n      do move y/n
+
+	[confirm button]
+
+}
+
+4 booking_confirm.php
+
+if(from failled){
+	cancel or do operations that the user selected(or it will be done by batch)
+}
+
+goto show schedule page(no edit mode).
+
+
