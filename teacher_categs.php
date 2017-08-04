@@ -29,8 +29,8 @@ foreach ($teacherCategs as $tc) {
 ?>
 
 	<tr>
-		<td><input type="checkbox" name="categ_id[]" value="<?=$categ_id?>" <?=$checked?>></td>
-		<td><?=$tc->categ->categ_name?></td>
+		<td><input type="checkbox" id="ck_categ_id_<?=$categ_id?>" name="categ_id[]" value="<?=$categ_id?>" <?=$checked?>></td>
+		<td><label for="ck_categ_id_<?=$categ_id?>"><?=$tc->categ->categ_name?></label></td>
 		<td><input name="categ_prise_<?=$categ_id?>" value="<?=$prise?>" size="6">Y/h</td>
 	</tr>
 <?php 

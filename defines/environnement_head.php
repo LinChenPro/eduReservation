@@ -1,7 +1,7 @@
 <?php
 error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 
-$debug = 0;
+$debug = /** /1/*/0/**/;
 
 ini_set("display_errors", $debug ? "on" : "off");
 ini_set('max_execution_time', 80);

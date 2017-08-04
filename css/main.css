@@ -1,0 +1,22 @@
+button, .button{
+	display: inline-block;
+	color: black;
+	font-size:13px;
+	font-family: arial;
+	padding:3px 10px;
+	min-width: 90px;
+	box-sizing: border-box;
+	text-align: center;
+	border:1px solid gray; 
+	background-color: #DDDDDD;
+	margin: 2px;
+	text-decoration: none;
+	cursor: pointer;
+}
+button:hover, .button:hover{
+	background-color: #F0F0F0;
+}
+
+.result_info{
+	padding:50px;
+}

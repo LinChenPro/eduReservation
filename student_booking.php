@@ -88,8 +88,8 @@ for($h=0; $h<48; $h++){
 ?>		
 	</table>
 </div>
-<button id="sendSelect">select</button>
-<button id="sendRemove">remove</button>
+<button id="sendSelect">new lesson</button>
+<a href="booking_resume.php?uid=<?="$uid"?>" class="button">submit</a>
 <br>
 <textarea id="showData" style="width:80%;margin:10px;padding:10px;border:1px solid black;height:300px" rows="50"></textarea>
 

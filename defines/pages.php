@@ -20,7 +20,7 @@ $page_infos = array(
 	"teacher_calendar" => array(
 		'title' => "teacher's calendar", 
 		'file' => "teacher_calendar.php",
-		'css' => array("/css/calendar.css"),
+		'css' => array("/css/main.css", "/css/calendar.css"),
 		'type' => "html"
 	),
 	"teacher_calendar_treate" => array(
@@ -31,16 +31,38 @@ $page_infos = array(
 	"student_booking" => array(
 		'title' => "select your lessons", 
 		'file' => "student_booking.php",
-		'css' => array("/css/booking.css"),
+		'css' => array("/css/main.css", "/css/booking.css"),
 		'type' => "html"
 	),
 	"student_booking_treate" => array(
 		'title' => "select your lessons", 
 		'file' => "student_booking_treate.php",
 		'type' => "ajax"
+	),
+	"booking_resume" => array(
+		'title' => "resume of booking selections", 
+		'file' => "booking_resume.php",
+		'css' => array("/css/main.css"),
+		'type' => "html"
+	),
+	"booking_payment" => array(
+		'title' => "entry of booking payment", 
+		'file' => "booking_payment.php",
+		'css' => array("/css/main.css"),
+		'type' => "html"
+	),
+	"booking_payment_result" => array(
+		'title' => "result of booking payment", 
+		'file' => "booking_payment_result.php",
+		'css' => array("/css/main.css"),
+		'type' => "html"
+	),
+	"booking_confirm" => array(
+		'title' => "confirm_booking_payment", 
+		'file' => "booking_confirm.php",
+		'type' => "data"
 	)
 );
-
 
 function getCrtPageTitle(){
 	global $page_infos;
