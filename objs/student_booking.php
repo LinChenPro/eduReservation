@@ -371,3 +371,66 @@ function confirmConflictResOpe($tid, $sid, $day_nb, $from_h, $to_h, $selected_re
 
 	return true;
 }
+
+function abandonOperations($session_id, ...$ope_status){
+	if(empty($ope_status)){
+		return;
+	}
+
+	$sqlRes = "update reservation, student_operation set res_statut=".RES_STATUT_CREATED." where res_id=ope_res_id and ope_session_id=$session_id and ope_statut in(".concat("", ",", ...$ope_status).")";
+	$sqlClean = "delete from student_operation where ope_session_id=$session_id and ope_statut in(".concat("", ", ", ...$ope_status).")";
+
+	query($sqlRes);
+	query($sqlClean);
+}
+
+function applyOperations($session_id, ...$ope_status){
+	if(empty($ope_status)){
+		return;
+	}
+
+	$sqlNewResCnt = "select count(1) as count from student_operation where ope_session_id=$session_id and ope_statut=".OPE_STATUT_TOCREATE;
+	$count_new_res = fieldQuery($sqlNewResCnt, "count", 0);
+	foreach ($ope_status as $ope_statut) {
+		if($ope_statut == OPE_STATUT_TOCREATE && $count_new_res>0){ // TODO && create operations not treated
+			$sqlRes  = "insert into reservation (res_tid,res_sid,res_categ_id,res_tp_id,res_week_nb,res_day_nb,res_begin_nb,res_end_nb,res_statut,res_create_time,res_modify_time,res_pur_id,res_session_id) ";			
+			$sqlRes .= "select ope_tid,session_sid,ope_categ_id,ope_tp_id,ope_week_nb,ope_day_nb,ope_begin_nb,ope_end_nb,".RES_STATUT_CREATED.",CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,ope_pur_id,session_id ";
+			$sqlRes .= "from student_operation, student_session where session_id=$session_id and ope_session_id=$session_id and ope_statut=$ope_statut"; 
+
+
+			$sqlHist  = "insert into history(hist_res_id,hist_tid,hist_sid,hist_categ_id,hist_pur_id,hist_tp_id,hist_week_nb,hist_day_nb,hist_begin_nb,hist_end_nb,hist_action,hist_action_time,hist_session_create_time,hist_session_id) ";
+			$sqlHist .= "select res_id,res_tid,res_sid,res_categ_id,res_pur_id,res_tp_id,res_week_nb,res_day_nb,res_begin_nb,res_end_nb,".HIST_ACTION_TYPE_CREATE.",res_modify_time,session_create_time,res_session_id ";
+			$sqlHist .= "from reservation, student_session where session_id=$session_id and res_session_id=$session_id and res_statut=".RES_STATUT_CREATED;
+
+			query($sqlRes);
+			query($sqlHist);
+		}else if($ope_statut == OPE_STATUT_TODELETE){
+			$sqlRes = "update reservation set res_statut=".RES_STATUT_DELETED.", res_modify_time=CURRENT_TIMESTAMP, res_session_id=$session_id where res_id in(select ope_res_id from student_operation where ope_statut=".OPE_STATUT_TODELETE." and ope_session_id=$session_id)";
+
+			$sqlHist  = "insert into history(hist_res_id,hist_tid,hist_sid,hist_categ_id,hist_pur_id,hist_tp_id,hist_week_nb,hist_day_nb,hist_begin_nb,hist_end_nb,hist_action,hist_action_time,hist_session_create_time,hist_session_id) ";
+			$sqlHist .= "select res_id,res_tid,res_sid,res_categ_id,res_pur_id,res_tp_id,res_week_nb,res_day_nb,res_begin_nb,res_end_nb,".HIST_ACTION_TYPE_DELETE.",res_modify_time,session_create_time,res_session_id ";
+			$sqlHist .= "from reservation, student_session, student_operation where session_id=$session_id and res_session_id=$session_id and res_statut=".RES_STATUT_DELETED." and ope_session_id=$session_id and ope_res_id=res_id and ope_statut=".OPE_STATUT_TODELETE;
+
+			query($sqlRes);
+			query($sqlHist);
+		}else if($ope_statut == OPE_STATUT_TOMOVE){
+			$sqlRes = "update reservation, student_operation set res_statut=".RES_STATUT_CREATED.", res_modify_time=CURRENT_TIMESTAMP, res_session_id=ope_session_id, res_week_nb=ope_week_nb, res_day_nb=ope_day_nb, res_begin_nb=ope_begin_nb, res_end_nb=ope_end_nb where res_id=ope_res_id and res_statut=".RES_STATUT_MOVING." and ope_statut=".OPE_STATUT_TOMOVE." and ope_session_id=$session_id";
+
+			$sqlHist  = "insert into history(hist_res_id,hist_tid,hist_sid,hist_categ_id,hist_pur_id,hist_tp_id,hist_week_nb,hist_day_nb,hist_begin_nb,hist_end_nb,hist_action,hist_action_time,hist_session_create_time,hist_session_id) ";
+			$sqlHist .= "select res_id,res_tid,res_sid,res_categ_id,res_pur_id,res_tp_id,res_week_nb,res_day_nb,res_begin_nb,res_end_nb,".HIST_ACTION_TYPE_MOVE.",res_modify_time,session_create_time,res_session_id ";
+			$sqlHist .= "from reservation, student_session, student_operation where session_id=$session_id and res_session_id=$session_id and ope_session_id=$session_id and ope_res_id=res_id and ope_statut=".OPE_STATUT_TOMOVE;
+
+			query($sqlRes);
+			query($sqlHist);
+		}
+	}
+
+	$sqlClean = "delete from student_operation where ope_session_id=$session_id and ope_statut in(".concat("", ", ", ...$ope_status).")";
+	query($sqlClean);
+
+}
+
+
+
+
+

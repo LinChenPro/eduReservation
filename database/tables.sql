@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS `student_balance`;
 DROP TABLE IF EXISTS `student_session`;
 DROP TABLE IF EXISTS `student_operation`;
 DROP TABLE IF EXISTS `reservation`;
+DROP TABLE IF EXISTS `history`;
 DROP TABLE IF EXISTS `purchase`;
 DROP TABLE IF EXISTS `weekly_action_stamp`;
 
@@ -110,7 +111,27 @@ CREATE TABLE `reservation` (
   `res_statut` tinyint(1),
   `res_create_time` datetime,
   `res_modify_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `res_session_id` int(6)  unsigned NOT NULL,
   PRIMARY KEY (`res_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `history` (
+  `hist_id` int(6)  unsigned NOT NULL AUTO_INCREMENT,
+  `hist_res_id` int(6) unsigned NOT NULL,
+  `hist_tid` int(6) unsigned NOT NULL,
+  `hist_sid` int(6) unsigned NOT NULL,
+  `hist_categ_id` int(6) unsigned NOT NULL,
+  `hist_pur_id` int(6) unsigned,
+  `hist_tp_id` int(6) unsigned NOT NULL,
+  `hist_week_nb` int unsigned NOT NULL,
+  `hist_day_nb` int unsigned NOT NULL,
+  `hist_begin_nb` int unsigned NOT NULL,
+  `hist_end_nb` int unsigned NOT NULL,
+  `hist_action` tinyint(1),
+  `hist_action_time` datetime,
+  `hist_session_create_time` datetime,
+  `hist_session_id` int(6)  unsigned NOT NULL,
+  PRIMARY KEY (`hist_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `purchase` (

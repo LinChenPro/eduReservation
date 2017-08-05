@@ -222,6 +222,25 @@ function dbLineToOperation($row){
 		return $operation;	
 }
 
+function dbLineToOperationForData($row){
+		$operation = new Operation();
+		$operation->ope_id = $row["ope_id"];
+		$operation->res_id = $row["ope_res_id"];
+		$operation->tid = $row["ope_tid"];
+		$operation->sid = $row["sid"];
+		$operation->categ_id = $row["ope_categ_id"];
+		$operation->week_nb = $row["ope_week_nb"];
+		$operation->day_nb = $row["ope_day_nb"];
+		$operation->begin_nb = $row["ope_begin_nb"];
+		$operation->end_nb = $row["ope_end_nb"];
+		$operation->ope_tp_id = $row["ope_tp_id"];
+		$operation->ope_pur_id = $row["ope_pur_id"];
+		$operation->session_create_time = $row["session_create_time"];
+		$operation->session_id = $row["session_id"];
+		$operation->statut = $row["ope_statut"];
+		return $operation;	
+}
+
 function getUserOperations($uid, $week_nb, ...$clauses){
 	$sql = "select student_operation.*, r.res_week_nb as res_week_nb, t.user_name as t_name, s.user_id as sid, s.user_name as s_name, c.categ_name as categ_name "
 		."from student_session, users as t, users as s, categories as c, student_operation "
@@ -230,6 +249,20 @@ function getUserOperations($uid, $week_nb, ...$clauses){
 		."and t.user_id=ope_tid and s.user_id=session_sid and c.categ_id=ope_categ_id "
 		."and ope_week_nb=$week_nb "
 		."and $uid in(ope_tid, session_sid)";
+	if(!empty($clauses)){
+		$sql .= concat(" and ", " and ", ...$clauses);
+	}
+
+	$operationArr = dbGetObjsByQuery($sql, 'dbLineToOperationForData');
+
+	return $operationArr;
+}
+
+function getOperationsBySessionId($session_id, ...$clauses){
+	$sql = "select student_operation.*, student_session.session_sid as sid, "
+		."student_session.session_create_time as session_create_time, "
+		."student_session.session_id as session_id "
+		."from student_session, student_operation where ope_session_id=session_id ";
 	if(!empty($clauses)){
 		$sql .= concat(" and ", " and ", ...$clauses);
 	}
@@ -256,6 +289,12 @@ function getOperationById($ope_id, ...$clauses){
 	return $operation;
 
 }
+
+define("HIST_ACTION_TYPE_CREATE", 0);
+define("HIST_ACTION_TYPE_DELETE", 1);
+define("HIST_ACTION_TYPE_MOVE", 2);
+
+
 
 /* ---------------------------------------------------------------- */
 define("TCA_STATUT_AVAILABLE", 1);

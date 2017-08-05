@@ -2,7 +2,7 @@
 function concat($firstSep, $sep, ...$values){
 	$str = "";
 	foreach ($values as $value) {
-		if(!empty($value)){
+		if(!empty($value) || $value===0){
 			if($str == ""){
 				$str .= $firstSep.$value;
 			}else{

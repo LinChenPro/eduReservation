@@ -211,10 +211,16 @@ goto show schedule page(no edit mode).
 
 
 
+cancelOperation
+
+abandonOperations($session_id, ...$ope_status);
+applyOperations($session_id, ...$ope_status);
 
 TODO("do cancel options, add history");
 TODO("do move options, add history");
+
 TODO("change operations to reservation, add history");
+
 TODO("cancel the new lesson operations, add history");
 
 TODO("add session statut : on_selection, waiting_payment_result, archive, user can change only when 'on_selection'");
