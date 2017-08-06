@@ -200,7 +200,13 @@ class Operation{
 	public $day_nb;
 	public $begin_nb;
 	public $end_nb;
+	public $res_day_nb;
+	public $res_begin_nb;
+	public $res_end_nb;
 	public $statut;
+	public $tp_id;
+	public $tp_prise;
+	public $pur_id;
 }
 
 function dbLineToOperation($row){
@@ -227,14 +233,19 @@ function dbLineToOperationForData($row){
 		$operation->ope_id = $row["ope_id"];
 		$operation->res_id = $row["ope_res_id"];
 		$operation->tid = $row["ope_tid"];
-		$operation->sid = $row["sid"];
+		$operation->t_name = $row["t_name"];
 		$operation->categ_id = $row["ope_categ_id"];
+		$operation->categ_name = $row["categ_name"];
 		$operation->week_nb = $row["ope_week_nb"];
 		$operation->day_nb = $row["ope_day_nb"];
 		$operation->begin_nb = $row["ope_begin_nb"];
 		$operation->end_nb = $row["ope_end_nb"];
-		$operation->ope_tp_id = $row["ope_tp_id"];
-		$operation->ope_pur_id = $row["ope_pur_id"];
+		$operation->res_day_nb = $row["res_day_nb"];
+		$operation->res_begin_nb = $row["res_begin_nb"];
+		$operation->res_end_nb = $row["res_end_nb"];
+		$operation->tp_id = $row["ope_tp_id"];
+		$operation->tp_prise = $row["tp_prise"];
+		$operation->pur_id = $row["ope_pur_id"];
 		$operation->session_create_time = $row["session_create_time"];
 		$operation->session_id = $row["session_id"];
 		$operation->statut = $row["ope_statut"];
@@ -253,21 +264,22 @@ function getUserOperations($uid, $week_nb, ...$clauses){
 		$sql .= concat(" and ", " and ", ...$clauses);
 	}
 
-	$operationArr = dbGetObjsByQuery($sql, 'dbLineToOperationForData');
+	$operationArr = dbGetObjsByQuery($sql, 'dbLineToOperation');
 
 	return $operationArr;
 }
 
 function getOperationsBySessionId($session_id, ...$clauses){
-	$sql = "select student_operation.*, student_session.session_sid as sid, "
-		."student_session.session_create_time as session_create_time, "
-		."student_session.session_id as session_id "
-		."from student_session, student_operation where ope_session_id=session_id ";
+	$sql = "select student_operation.*, student_session.session_sid as sid, t.user_name as t_name, categ_name, "
+		."student_session.session_create_time as session_create_time, student_session.session_id as session_id, "
+		."res_day_nb, res_begin_nb, res_end_nb, tp_prise "
+		."from student_session, student_operation, reservation, teacher_prise, users as t, categories where ope_session_id=session_id "
+		."and t.user_id=ope_tid and categ_id=ope_categ_id and res_id=ope_res_id and tp_id=ope_tp_id";
 	if(!empty($clauses)){
 		$sql .= concat(" and ", " and ", ...$clauses);
 	}
 
-	$operationArr = dbGetObjsByQuery($sql, 'dbLineToOperation');
+	$operationArr = dbGetObjsByQuery($sql, 'dbLineToOperationForData');
 
 	return $operationArr;
 
@@ -290,6 +302,57 @@ function getOperationById($ope_id, ...$clauses){
 
 }
 
+// purchase
+class Purchase{
+	public $pur_id;
+	public $tid;
+	public $sid;
+	public $categ_id;
+	public $tp_id;
+	public $tp_prise;	
+	public $hour_total;
+	public $hour_rest;
+	public $statut;
+	public $create_time;
+	public $modify_time;
+}
+
+function dbLineToPurchase($row){
+		$purchase = new Purchase();
+		$purchase->pur_id = $row["pur_id"];
+		$purchase->tid = $row["pur_tid"];
+		$purchase->t_name = $row["s_name"];
+		$purchase->sid = $row["pur_sid"];
+		$purchase->s_name = $row["s_name"];
+		$purchase->categ_id = $row["pur_categ_id"];
+		$purchase->categ_name = $row["categ_name"];
+		$purchase->tp_id = $row["pur_tp_id"];
+		$purchase->tp_prise = $row["tp_prise"];
+		$purchase->hour_total = $row["pur_hour_total"];
+		$purchase->hour_rest = $row["pur_hour_rest"];
+		$purchase->statut = $row["pur_statut"];
+		$purchase->create_time = $row["pur_create_time"];
+		$purchase->modify_time = $row["pur_modify_time"];
+		return $purchase;	
+}
+
+
+function getStudentPurchases($sid, ...$clauses){
+	$sql = "select purchase.*, categ_name, t.user_name as t_name, s.user_name as s_name, tp_prise from purchase, teacher_prise, users as t, users as s, categories where pur_sid=$sid and pur_tp_id=tp_id and t.user_id=pur_tid and s.user_id=pur_sid and pur_categ_id=categ_id";
+	if(!empty($clauses)){
+		$sql .= concat(" and ", " and ", ...$clauses);
+	}
+	return dbGetObjsByQuery($sql, 'dbLineToPurchase');	
+
+}
+
+function getSessionRelativePurchases($session){
+	$clause = "(pur_tid, pur_categ_id) in(select ope_tid, ope_categ_id from student_operation where ope_session_id=".$session->session_id.")";
+	return getStudentPurchases($session->session_sid, $clause);
+}
+
+
+// history
 define("HIST_ACTION_TYPE_CREATE", 0);
 define("HIST_ACTION_TYPE_DELETE", 1);
 define("HIST_ACTION_TYPE_MOVE", 2);

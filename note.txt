@@ -211,23 +211,26 @@ goto show schedule page(no edit mode).
 
 
 
-cancelOperation
-
 abandonOperations($session_id, ...$ope_status);
 applyOperations($session_id, ...$ope_status);
 
-TODO("do cancel options, add history");
-TODO("do move options, add history");
-
-TODO("change operations to reservation, add history");
-
-TODO("cancel the new lesson operations, add history");
-
+TODO("booking : manage page affichage based on session statut");
 TODO("add session statut : on_selection, waiting_payment_result, archive, user can change only when 'on_selection'");
 TODO("change current session statut to finish (or delete session ?)");
 TODO("change current session statut to waiting payment"); 
 TODO("change current session status to payment succes or payment failed");
+TODO("change current session status to applied or abandon");
 
 TODO("calcul resume, show resume, show selection of mode and type of payment");
-TODO("booking : manage page affichage based on session statut");
 TODO("student_booking in read mode");
+
+!!! change balance and purchase situation after payment.
+
+
+
+
+
+js 
+rembourse abandon
+
+

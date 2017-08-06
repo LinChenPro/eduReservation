@@ -59,9 +59,11 @@ $statut = OPE_STATUT_TODELETE;
 addOperation($tid, $sid, $categ_id, $tp_id, $week_nb, $day_nb, $begin_nb, $end_nb, $statut);
 
 
+insert into purchase(pur_tid, pur_sid, pur_categ_id, pur_tp_id, pur_hour_total, pur_hour_rest, pur_create_time) value(1, 2, 1, 1, 10, 10, CURRENT_TIMESTAMP);
 
+insert into purchase(pur_tid, pur_sid, pur_categ_id, pur_tp_id, pur_hour_total, pur_hour_rest, pur_create_time) value(1, 2, 1, 7, 10, 10, CURRENT_TIMESTAMP);
 
-
+insert into student_balance(sb_sid, sb_amount) value(2, 20000);
 
 include_once('defines/environnement_foot.php');
 

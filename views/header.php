@@ -10,7 +10,7 @@ $css_arr = getCrtPageCss();
 if(!empty($css_arr)){
 	foreach ($css_arr as $css_link) {
 ?>
-		<link rel="stylesheet" type="text/css" href="<?=$css_link?>" />
+		<link rel="stylesheet" type="text/css" href="<?=$css_link?><?=("?".date('Y-m-d_H:i:s'))?>" />
 <?php
 	}
 }
