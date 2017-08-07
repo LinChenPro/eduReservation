@@ -308,6 +308,9 @@ class Purchase{
 	public $tid;
 	public $sid;
 	public $categ_id;
+	public $t_name;
+	public $s_name;
+	public $categ_name;
 	public $tp_id;
 	public $tp_prise;	
 	public $hour_total;
@@ -315,6 +318,25 @@ class Purchase{
 	public $statut;
 	public $create_time;
 	public $modify_time;
+
+	public function clone(){
+		$purchase = new Purchase();
+		$purchase->pur_id = $this->pur_id; 
+		$purchase->tid = $this->tid; 
+		$purchase->sid = $this->sid; 
+		$purchase->categ_id = $this->categ_id; 
+		$purchase->t_name = $this->t_name; 
+		$purchase->s_name = $this->s_name; 
+		$purchase->categ_name = $this->categ_name; 
+		$purchase->tp_id = $this->tp_id; 
+		$purchase->tp_prise = $this->tp_prise; 
+		$purchase->hour_total = $this->hour_total; 
+		$purchase->hour_rest = $this->hour_rest; 
+		$purchase->statut = $this->statut; 
+		$purchase->create_time = $this->create_time; 
+		$purchase->modify_time = $this->modify_time; 
+		return $purchase;
+	}
 }
 
 function dbLineToPurchase($row){
@@ -351,6 +373,13 @@ function getSessionRelativePurchases($session){
 	return getStudentPurchases($session->session_sid, $clause);
 }
 
+function getTotalPrise($prise, $begin_nb, $end_nb){
+	return ($end_nb-$begin_nb+1)*$prise/2;
+}
+
+function getTotalPriseR($prise, $begin_nb, $end_nb){
+	return ($end_nb-$begin_nb+1)*$prise/200;
+}
 
 // history
 define("HIST_ACTION_TYPE_CREATE", 0);

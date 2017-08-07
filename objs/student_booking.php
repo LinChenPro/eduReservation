@@ -315,7 +315,7 @@ function cancelOperation($ope_id){
 function addOperationToDB($session_id, $res_id, $tid, $sid, $categ_id, $tp_id, $week_nb, $day_nb, $begin_nb, $end_nb, $pur_id, $statut){
 
 	$sql_insert_operation = "insert into student_operation(ope_session_id,ope_res_id,ope_tid,ope_categ_id,ope_tp_id,ope_week_nb,ope_day_nb,ope_begin_nb,ope_end_nb,ope_statut,ope_pur_id)"
-		." values($session_id, $res_id, $tid, $categ_id, $tp_id, $week_nb, $day_nb, $begin_nb, $end_nb, $statut,ope_pur_id)";
+		." values($session_id, $res_id, $tid, $categ_id, $tp_id, $week_nb, $day_nb, $begin_nb, $end_nb, $statut, $pur_id)";
 	query($sql_insert_operation);
 
 }
