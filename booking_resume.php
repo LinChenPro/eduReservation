@@ -2,6 +2,39 @@
 $page_name = "booking_resume";
 
 require_once('defines/environnement_head.php');
+function addLessonToItem($arr, $ope){
+	$key = $ope->categ_id."_".$ope->tid;
+	$item = $arr[$key];
+	if($item==null){
+		$item = array();
+		$item["categ_id"] = $ope->categ_id;
+		$item["categ_name"] = $ope->categ_name;
+		$item["tid"] = $ope->tid;
+		$item["t_name"] = $ope->t_name;
+		$item["prise"] = $ope->tp_prise;
+		$item["hours"] = ($ope->end_nb - $ope->begin_nb +1)/2;
+		$item["prise_total"] = $ope->tp_prise * ($ope->end_nb - $ope->begin_nb +1)/2;
+		$item["lessons"] = array();
+		$item["purchase"] = array();
+		$item["lessons"][$ope->ope_id] = $ope;
+	}else{
+		$item["hours"] += ($ope->end_nb - $ope->begin_nb +1)/2;
+		$item["prise_total"] += $ope->tp_prise * ($ope->end_nb - $ope->begin_nb +1)/2;
+		$item["lessons"][$ope->ope_id] = $ope;
+	}
+}
+
+function addPurchaseToItem($arr, $purchase){
+	if($purchase->hour_rest>0){
+		$key = $purchase->categ_id."_".$purchase->tid;
+		$item = $arr[$key];
+		if($item!=null){
+			$item["purchase"][$purchase->pur_id] = $purchase;
+		}
+	}
+}
+
+
 
 $uid = getCurrentUid();
 $user = dbFindByKey("User", $uid);
@@ -17,20 +50,24 @@ $userLessonsToMove = array();
 
 $userBalanceAfterRefund = $userBalance;
 $userPurchasesAfterRefund = array();
-foreach ($userPurchases as $purchase) {
-	$userPurchasesAfterRefund[$purchase->pur_id] = $purchase->clone();
-}
 
+$userPaymentItems = array();
 
 foreach($userOperations as $operation){
 	if($operation->statut == OPE_STATUT_TODELETE){
 		array_push($userLessonsToDelete, $operation);
 	}else if($operation->statut == OPE_STATUT_TOCREATE){
 		array_push($userLessonsToCreate, $operation);
+		addLessonToItem($userPaymentItems, $operation);
 	}else if($operation->statut == OPE_STATUT_TOMOVE){
 		array_push($userLessonsToMove, $operation);
 	}
 }
+
+foreach ($userPurchases as $purchase) {
+	$userPurchasesAfterRefund[$purchase->pur_id] = $purchase->cloneMe();
+}
+
 
 // js 
 // rembourse abandon
@@ -172,6 +209,19 @@ if(!empty($userLessonsToDelete)){
 
 <?php
 }
+
+
+
+// add purchase to pay items
+foreach ($userPurchases as $purchase) {
+	$userPurchasesAfterRefund[$purchase->pur_id] = $purchase->clone();
+	addPurchaseToItem($userPaymentItems, $purchase);
+}
+
+
+
+
+
 ?>
 
 

@@ -319,7 +319,7 @@ class Purchase{
 	public $create_time;
 	public $modify_time;
 
-	public function clone(){
+	public function cloneMe(){
 		$purchase = new Purchase();
 		$purchase->pur_id = $this->pur_id; 
 		$purchase->tid = $this->tid; 
