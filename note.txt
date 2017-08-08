@@ -225,19 +225,27 @@ TODO("calcul resume, show resume, show selection of mode and type of payment");
 TODO("student_booking in read mode");
 
 !!! change balance and purchase situation after payment.
+!!! student_booking.php : case when teacher offer no longer the categ but student still has purchase no consumed.
 
 
 
+----------------------------------------------------------------------------------
+categ | t_name | h_total | prise/h | prise total | *pur ho - hf | rest h - xxx  
+      |        |         |         |             | *pur ho - hf | 
+      |        |         |         |             | *bal ho - hf |  
+----------------------------------------------------------------------------------
+categ | t_name | h_total | prise/h | prise total | *pur ho - hf | rest h - xxx  
+      |        |         |         |             | *pur ho - hf | 
+      |        |         |         |             | *bal ho - hf |  
+----------------------------------------------------------------------------------
+                                                               
+                                                               total to pay: xxx
 
+                                                               pay by 
+                                                                      *a  
+                                                                      *b  
+                                                                      *c
+                                                                     ______
+                                                                    |  ok  |
 
-js 
-rembourse abandon
-
-
-
-select purchase.*, categ_name, t.user_name as t_name, s.user_name as s_name, tp_prise from purchase, teacher_prise, users as t, users as s, categories where pur_sid=2 and pur_tp_id=tp_id and t.user_id=pur_tid and s.user_id=pur_sid and pur_categ_id=categ_id;
-
- and (pur_tid, pur_categ_id) in(select ope_tid, ope_categ_id from student_operation where ope_session_id=1);
-
-select purchase.*, categ_name, t.user_name as t_name, s.user_name as s_name, tp_prise from purchase, teacher_prise, users as t, users as s, categories where pur_sid=2 and pur_tp_id=tp_id and t.user_id=pur_tid and s.user_id=pur_sid and pur_categ_id=categ_id and (pur_tid, pur_categ_id) in(select ope_tid, ope_categ_id from student_operation where ope_session_id=175)
 
