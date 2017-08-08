@@ -2,9 +2,9 @@
 $page_name = "booking_resume";
 
 require_once('defines/environnement_head.php');
-function addLessonToItem($arr, $ope){
+function addLessonToItem(&$arr, $ope){
 	$key = $ope->categ_id."_".$ope->tid;
-	$item = $arr[$key];
+	$item = $arr[$key];	
 	if($item==null){
 		$item = array();
 		$item["categ_id"] = $ope->categ_id;
@@ -15,21 +15,22 @@ function addLessonToItem($arr, $ope){
 		$item["hours"] = ($ope->end_nb - $ope->begin_nb +1)/2;
 		$item["prise_total"] = $ope->tp_prise * ($ope->end_nb - $ope->begin_nb +1)/2;
 		$item["lessons"] = array();
-		$item["purchase"] = array();
+		$item["purchases"] = array();
 		$item["lessons"][$ope->ope_id] = $ope;
+		$arr[$key] = $item;
 	}else{
-		$item["hours"] += ($ope->end_nb - $ope->begin_nb +1)/2;
-		$item["prise_total"] += $ope->tp_prise * ($ope->end_nb - $ope->begin_nb +1)/2;
-		$item["lessons"][$ope->ope_id] = $ope;
+		$arr[$key]["hours"] = $item["hours"] + ($ope->end_nb - $ope->begin_nb +1)/2;
+		$arr[$key]["prise_total"] += $ope->tp_prise * ($ope->end_nb - $ope->begin_nb +1)/2;
+		$arr[$key]["lessons"][$ope->ope_id] = $ope;
 	}
 }
 
-function addPurchaseToItem($arr, $purchase){
+function addPurchaseToItem(&$arr, $purchase){
 	if($purchase->hour_rest>0){
 		$key = $purchase->categ_id."_".$purchase->tid;
 		$item = $arr[$key];
 		if($item!=null){
-			$item["purchase"][$purchase->pur_id] = $purchase;
+			$arr[$key]["purchases"][$purchase->pur_id] = $purchase;
 		}
 	}
 }
@@ -42,8 +43,10 @@ $session = getExistSession($uid);
 
 $userBalance = fieldQuery("select sb_amount from student_balance where sb_sid=$uid", "sb_amount", 0);
 $userPurchases = getSessionRelativePurchases($session);
+$userFinalPaymentAmount = 0;
 
 $userOperations = getOperationsBySessionId($session->session_id);
+
 $userLessonsToDelete = array();
 $userLessonsToCreate = array();
 $userLessonsToMove = array();
@@ -214,31 +217,57 @@ if(!empty($userLessonsToDelete)){
 
 // add purchase to pay items
 foreach ($userPurchases as $purchase) {
-	$userPurchasesAfterRefund[$purchase->pur_id] = $purchase->clone();
+	$userPurchasesAfterRefund[$purchase->pur_id] = $purchase->cloneMe();
 	addPurchaseToItem($userPaymentItems, $purchase);
 }
 
-
-
-
-
 ?>
 
+	<br>
+	you have selected the new lessons as follow, you may select the payment mode for them:
+	<table>
+		<tr>
+			<td>categ</td><td>t_name</td><td>h_total</td><td>prise/h</td><td>prise total</td><td>pay mode</td><td>rest amount</td>
+		</tr>
+<?php
+	foreach($userPaymentItems as $paymentItem) {
+		$userFinalPaymentAmount += $paymentItem["prise_total"];
+?>
+		<tr>
+			<td><?=$paymentItem["categ_name"]?></td>
+			<td><?=$paymentItem["t_name"]?></td>
+			<td><?=$paymentItem["hours"]?></td>
+			<td><?=$paymentItem["prise"]/100?></td>
+			<td><?=$paymentItem["prise_total"]/100?></td>
+			<td>
+<?php
+		foreach($paymentItem["purchases"] as $purchase) {
+?>
+			<input type="checkbox"/> 
+				purchase 
+				total:<?=$purchase->hour_total?>h,
+				rest:<?=$purchase->hour_rest?>h,
+				after pay:<?=$purchase->hour_rest?>h
+				<br>
+<?php
+		}
+?>
+			</td>
+			<td><?=$paymentItem["prise_total"]/100?></td>
 
+		</tr>
+<?php
+	}
+?>
 
+	</table>
 
-<pre>
-you have selected the new lessons as follow, you may select the payment mode for them:
-teacher categ n lesson, h hours :  type_purchase(h hours, prise)		compte solde(rest)		payment rest
-teacher categ n lesson, h hours :  type_purchase(h hours, prise)		compte solde(rest)		payment rest
-teacher categ n lesson, h hours :  type_purchase(h hours, prise)		compte solde(rest)		payment rest
-teacher categ n lesson, h hours :  type_purchase(h hours, prise)		compte solde(rest)		payment rest
+you need to pay : <?=$userFinalPaymentAmount/100?>  
+select payment type: 
+<br><input type="radio" name="payment_type"/>wechat 
+<br><input type="radio" name="payment_type"/>credit card 
 
------------------------
-
-you need to pay : xxxx  select payment type: wechat/card 
-
-</pre>
+<br>
 <a href="student_booking.php?uid=<?=$uid?>" class="button">change my choises</a>
 
 <a href="booking_payment.php?uid=<?=$uid?>" class="button">payment</a>
