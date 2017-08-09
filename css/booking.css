@@ -44,9 +44,10 @@
 }
 
 .cal_cell{
-	opacity:0.7;
-	background-color: rgba(255,255,255,0.3);
+	opacity:0.9;
+	background-color: rgba(255,255,255,0.4);
 	font-size: 7.5px;
+	color: rgba(0,0,0,0.2);;
 }
 
 .cal_cell[data-statut="0"]{
@@ -79,6 +80,9 @@
 #lesson_div{
     user-select: none;
     cursor: default;
+    position: relative;
+    top:1px;
+    left:1px;
 }
 
 .span_lesson{
@@ -93,6 +97,7 @@
     user-select: none;
     cursor: default;
 	border:1px solid green;
+	background-color: rgba(255, 255, 255, 0.8);
 }
 
 .tiers{
@@ -100,7 +105,7 @@
 }
 
 .mine{
-	background-color:#FFF;
+	background-color: rgba(255, 255, 255, 0.8);
 }
 
 .span_lesson.non_editable{
@@ -111,7 +116,7 @@
 }
 
 .editable.movedaway{
-	border:1px solid green;
+	border:2px solid #FF4400;
 	border-style: dashed;
 }
 
@@ -121,7 +126,7 @@
 }
 
 .editable.deleting{
-	border:1px solid red;
+	border:2px solid red;
 	border-style: dashed;
 }
 
@@ -140,8 +145,11 @@
 	left : 850px;
 	top : 250px;
 	width:200px;
-	min-height: 200px;
+	min-height: 150px;
+	padding:10px;
 	display: inline-block;;
 	border:1px solid gray;
+	background-color: rgba(255, 255, 255, 0.8);
+	z-index: 300;
 }
 

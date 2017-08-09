@@ -46,7 +46,7 @@ if(!empty($categs)){
 </div>
 <div id="teacher_calendar_div" style="position:relative;">
 	<div id="lesson_div"></div>
-	<span id="lesson_detail_span">
+	<span id="lesson_detail_span" style="display: none;">
 		lesson : <span id="focuslesson_categ"></span>
 		<br>
 		day : <span id="focuslesson_day"></span>
@@ -59,11 +59,12 @@ if(!empty($categs)){
 		<br>
 		statut : <span id="focuslesson_statut"></span>
 		<br>
-		<a id="focuslesson_a_delete" style="display:none" href="javascript:focusLessonDelete()">delete</a> 
-		<a id="focuslesson_a_restore" style="display:none" href="javascript:focusLessonRestore()">restore</a> 
-		<a id="focuslesson_a_cancel" style="display:none" href="javascript:focusLessonCancel()">cancel</a> 
-		<a id="focuslesson_a_move" style="display:none" href="javascript:focusLessonMove()">move</a> 
-		<a id="focuslesson_a_goto" style="display:none" href="javascript:focusLessonGoto()">goto</a> 
+		<br>
+		<a class="button" id="focuslesson_a_delete" style="display:none" href="javascript:focusLessonDelete()">delete</a> 
+		<a class="button" id="focuslesson_a_restore" style="display:none" href="javascript:focusLessonRestore()">restore</a> 
+		<a class="button" id="focuslesson_a_cancel" style="display:none" href="javascript:focusLessonCancel()">cancel</a> 
+		<a class="button" id="focuslesson_a_move" style="display:none" href="javascript:focusLessonMove()">move</a> 
+		<a class="button" id="focuslesson_a_goto" style="display:none" href="javascript:focusLessonGoto()">goto</a> 
 
 	</span>
 	<div id="selection_div" style="z-index:1"></div>
@@ -120,7 +121,12 @@ var queryInfos = null;
 // mouse reaction needed
 var selection_begin = null;
 var selection_end = null;
-var isMouseDown = false;
+
+var MODE_EDIT = 1;
+var MODE_ADD = 2;
+var MODE_MOVE = 3;
+
+var crtMode = 1;
 
 var crtDetalTD = null; // td whose elm detail info shows in a div float
 var crtTeacherList = null;
@@ -442,6 +448,10 @@ function initView(spanObj, lesson){
 
 function setLessonMouseOver(obj, lesson){
 	obj.mouseover(function(evt){
+		if(MODE_EDIT != crtMode){
+			return;
+		}
+
 		currentFocusLesson = lesson;
 		lessonInOperation = true;
 		showDetailSpan();
@@ -462,6 +472,7 @@ function setLessonMouseOut(obj, lesson){
 
 function showDetailSpan(){
 	if(currentFocusLesson == null){
+		$("#lesson_detail_span").hide()
 		$("#focuslesson_categ").html("");
 		$("#focuslesson_day").html("");
 		$("#focuslesson_time").html("");
@@ -501,6 +512,25 @@ function showDetailSpan(){
 			}if(currentFocusLesson.tid!=tid || currentFocusLesson.categ_id!=categ_id){
 				$("#focuslesson_a_goto").css("display", "inline");
 			}
+		}
+		setDetailSpanLeftTop();
+		$("#lesson_detail_span").show();
+	}
+}
+
+function setDetailSpanLeftTop(){
+	if(currentFocusLesson != null){
+		var pos = getLessonPosition(currentFocusLesson.day_nb, currentFocusLesson.begin_h, currentFocusLesson.end_h);
+		var spanObj = $("#lesson_detail_span");
+		if(currentFocusLesson.day_nb-week_first_day>3){
+			spanObj.css("left", (pos.left-10-spanObj.outerWidth())+"px");
+		}else{
+			spanObj.css("left", (pos.left+pos.width+10)+"px");
+		}
+		if(currentFocusLesson.begin_h>24){
+			spanObj.css("top", (pos.top+pos.height-spanObj.outerHeight())+"px");
+		}else{
+			spanObj.css("top", pos.top+"px");
 		}
 	}
 }
@@ -547,9 +577,11 @@ function focusLessonCancel(){
 }
 
 function focusLessonMove(){
-	// TODO: to move mode, waite selection, then do the action follow:
+	moveLessonF();
+}
 
-	var dest_week;
+function moveLessonF(){
+		var dest_week;
 	if(currentFocusLesson.statut == LESSON_STATUT_CREATING || currentFocusLesson.statut == LESSON_STATUT_MOVEDHERE){
 		orig_week = currentFocusLesson.ope_week;
 	}else{
@@ -582,6 +614,7 @@ function focusLessonMove(){
 		dest_begin_h,
 		dest_end_h
 	);
+
 
 }
 
@@ -700,29 +733,33 @@ function showTeacherOptions(){
 
 /**************     presentation, element reactions     **************/
 $("body").mouseup(function(){
-	if(event.target.id == "sendSelect"){ // TODO
-		return;
-	}
-
-	if(isMouseDown){
-		isMouseDown = false;
+	if(crtMode==MODE_ADD){
+		crtMode = MODE_EDIT;
 		showSelection();
-	}else{
+		createLesson();
+	}else if(crtMode==MODE_EDIT){
 		initSelectionVars();
+	}else if(crtMode==MODE_MOVE){
 	}
 });
 
 function initSelectionVars(){
 	selection_begin = null;
 	selection_end = null;
-	isMouseDown = false;
+	if(crtMode==MODE_ADD){
+		crtMode = MODE_EDIT;
+	}
 	showSelection();
 }
 
 function select_begin(elm){
+	if($(elm).attr("data-statut")==0){
+		return;
+	}
+
 	event.stopPropagation();
 
-	isMouseDown = true;
+	crtMode = MODE_ADD;
 	var obj = $(elm);
 	selection_begin = {day:obj.attr("data-day"), h:obj.attr("data-h")};
 	selection_end = selection_begin;
@@ -730,23 +767,30 @@ function select_begin(elm){
 }
 
 function select_continue(elm){
+	if($(elm).attr("data-statut")==0){
+		return;
+	}
+
 	event.stopPropagation();
 	
-	if(isMouseDown){
+	if(crtMode==MODE_ADD){
 		var obj = $(elm);
-		selection_end = {day:obj.attr("data-day"), h:obj.attr("data-h")};
+		selection_end = {day:selection_begin.day, h:obj.attr("data-h")};
 		showSelection();
 	}else{
 	}
 }
 
 function select_end(elm){
-		event.stopPropagation();
-	if(isMouseDown){
+	event.stopPropagation();
+	if(crtMode==MODE_ADD){
 		var obj = $(elm);
-		selection_end = {day:obj.attr("data-day"), h:obj.attr("data-h")};
-		isMouseDown = false;
+		if($(elm).attr("data-statut")!=0){
+			selection_end = {day:selection_begin.day, h:obj.attr("data-h")};
+		}
+		crtMode = MODE_EDIT;
 		showSelection();
+		createLesson();
 	}else{
 		selection_begin = null;
 		selection_end = null;
@@ -781,7 +825,7 @@ function showSelection(){
 }
 
 function showResOpeDetail(elm){
-	if(!isMouseDown){
+	if(crtMode==MODE_EDIT){
 		event.stopPropagation();
 		var detail_div = $("#res_poe_detail_div");
 
@@ -888,6 +932,21 @@ function clearCrtTeacherData(){
 	crtTeacherLessonsTies = null;
 }
 
+function createLesson(){
+	if(selection_begin!=null && selection_end!=null && confirm("create new lesson here ?")){
+		var d_min = Math.min(selection_begin.day, selection_end.day);
+		var d_max = Math.max(selection_begin.day, selection_end.day);
+		var h_min = Math.min(selection_begin.h, selection_end.h);
+		var h_max = Math.max(selection_begin.h, selection_end.h);
+
+		createDemand(d_min, h_min, h_max);
+	}else{
+		selection_begin = null;
+		selection_end = null;
+		showSelection();
+	}
+}
+
 /**********  element reaction definitions *********/
 
 
@@ -915,20 +974,6 @@ $("#teacher_selector").change(function(){
 		initSelectionVars();
 		showDatas();
 
-	}
-});
-
-$("#sendSelect").click(function(){
-	event.stopPropagation();
-	event.preventDefault();
-
-	if(selection_begin!=null && selection_end!=null){
-		var d_min = Math.min(selection_begin.day, selection_end.day);
-		var d_max = Math.max(selection_begin.day, selection_end.day);
-		var h_min = Math.min(selection_begin.h, selection_end.h);
-		var h_max = Math.max(selection_begin.h, selection_end.h);
-
-		createDemand(d_min, h_min, h_max);
 	}
 });
 

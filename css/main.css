@@ -9,7 +9,7 @@ button, .button{
 	text-align: center;
 	border:1px solid gray; 
 	background-color: #DDDDDD;
-	margin: 2px;
+	margin: 5px 2px;
 	text-decoration: none;
 	cursor: pointer;
 }
