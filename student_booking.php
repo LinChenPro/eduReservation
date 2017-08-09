@@ -389,6 +389,7 @@ function setCellAttrbuts(day_nb, h, statut, type){
 //------------- show lesson -----------
 
 var currentFocusLesson = null;
+var currentMovingLesson = null;
 var lessonInOperation = false;
 var statut_texts = [];
 var res_statut_texts = [];
@@ -576,8 +577,9 @@ function focusLessonCancel(){
 	);
 }
 
-function focusLessonMove(){
-	moveLessonF();
+function focusLessonMoveMode(){
+	crtMode = MODE_MOVE;
+	currentMovingLesson = currentFocusLesson;
 }
 
 function moveLessonF(){
