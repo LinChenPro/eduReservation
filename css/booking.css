@@ -10,10 +10,22 @@
     cursor: default;
 }
 
+#cal_table[class="move_mode"] .cal_cell{
+    cursor: crosshair;
+}
+
 #selection_div{
 	position:absolute;
-	border:3px solid green;
+	border:2px solid green;
 	background-color: #CFC;
+	box-sizing: border-box;
+	display: none;
+}
+
+#move_div{
+	position:absolute;
+	border:2px solid green;
+	background-color: #CFE;
 	box-sizing: border-box;
 	display: none;
 }

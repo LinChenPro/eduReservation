@@ -63,11 +63,12 @@ if(!empty($categs)){
 		<a class="button" id="focuslesson_a_delete" style="display:none" href="javascript:focusLessonDelete()">delete</a> 
 		<a class="button" id="focuslesson_a_restore" style="display:none" href="javascript:focusLessonRestore()">restore</a> 
 		<a class="button" id="focuslesson_a_cancel" style="display:none" href="javascript:focusLessonCancel()">cancel</a> 
-		<a class="button" id="focuslesson_a_move" style="display:none" href="javascript:focusLessonMove()">move</a> 
+		<a class="button" id="focuslesson_a_move" style="display:none" href="javascript:focusLessonMoveModeBegin()">move</a> 
 		<a class="button" id="focuslesson_a_goto" style="display:none" href="javascript:focusLessonGoto()">goto</a> 
 
 	</span>
 	<div id="selection_div" style="z-index:1"></div>
+	<div id="move_div" style="z-index:1"></div>
 	<div id="res_poe_detail_div" style="z-index:101"></div>
 	<table id="cal_table" style="z-index:100;position:relative;">
 		<tr>
@@ -89,7 +90,6 @@ for($h=0; $h<48; $h++){
 ?>		
 	</table>
 </div>
-<button id="sendSelect">new lesson</button>
 <a href="booking_resume.php?uid=<?="$uid"?>" class="button">submit</a>
 <br>
 <textarea id="showData" style="width:80%;margin:10px;padding:10px;border:1px solid black;height:300px" rows="50"></textarea>
@@ -328,6 +328,7 @@ function feedTeacherSelector(responseData){
 
 function gotoSelectedTeacher(responseData){
 	crtTeacherList = responseData;
+	currentFocusLesson = null;
 	showDatas();
 	$("#teacher_selector").val(tid);
 
@@ -577,46 +578,52 @@ function focusLessonCancel(){
 	);
 }
 
-function focusLessonMoveMode(){
+function focusLessonMoveModeBegin(){
 	crtMode = MODE_MOVE;
 	currentMovingLesson = currentFocusLesson;
+	$("#cal_table").addClass("move_mode");
+	currentFocusLesson = null;
+	showDetailSpan()
 }
 
-function moveLessonF(){
-		var dest_week;
-	if(currentFocusLesson.statut == LESSON_STATUT_CREATING || currentFocusLesson.statut == LESSON_STATUT_MOVEDHERE){
-		orig_week = currentFocusLesson.ope_week;
+function lessonMoveModeEnd(){
+	crtMode = MODE_EDIT;
+	currentMovingLesson = null;
+	$("#cal_table").removeClass("move_mode");
+	hideMoveSelector();
+}
+
+function moveSelectedLesson(elm){
+	var orig_week = 0;
+	if(currentMovingLesson.statut == LESSON_STATUT_CREATING || currentMovingLesson.statut == LESSON_STATUT_MOVEDHERE){
+		orig_week = currentMovingLesson.ope_week;
 	}else{
-		orig_week = currentFocusLesson.res_week;
+		orig_week = currentMovingLesson.res_week;
 	}
 
 	/* test destination */
-	var dest_begin_h = currentFocusLesson.begin_h-0+20;
-	var dest_end_h = currentFocusLesson.end_h-0+20;
-	while(dest_begin_h<48 && dest_end_h>=48){
-		dest_begin_h++;
-		dest_end_h++;
-	}
-	var dest_day_nb = currentFocusLesson.day_nb;
-	if(dest_begin_h>=48){
-		dest_begin_h = dest_begin_h % 48;
-		dest_end_h = dest_end_h % 48;
-		dest_day_nb -= -1;
-	}
-	var dest_week = (dest_day_nb-(dest_day_nb%7))/7;
+	var tdObj = $(elm);
+	var dest_begin_h = tdObj.attr("data-h") - 0;
+	var dest_end_h = currentMovingLesson.end_h - currentMovingLesson.begin_h + dest_begin_h;
+	var dest_day_nb = tdObj.attr("data-day");
 
+	var lesson_ope_id = currentMovingLesson.ope_id;
+	var lesson_res_id = currentMovingLesson.res_id;
+	var lesson_tid = currentMovingLesson.tid;
+	var lesson_sid = currentMovingLesson.sid;
+
+	lessonMoveModeEnd();
 	moveLesson(
-		currentFocusLesson.ope_id, 
-		currentFocusLesson.res_id,
-		currentFocusLesson.tid, 
-		currentFocusLesson.sid,
+		lesson_ope_id, 
+		lesson_res_id,
+		lesson_tid, 
+		lesson_sid,
 		orig_week,
-		dest_week,
+		week_nb,
 		dest_day_nb,
 		dest_begin_h,
 		dest_end_h
 	);
-
 
 }
 
@@ -696,6 +703,14 @@ function showDatas(){
 		}
 	}
 
+	showDetailSpan();
+
+	// confirm mode 
+	if(currentMovingLesson == null || currentMovingLesson.tid !=  tid){
+		crtMode = MODE_EDIT;
+		lessonMoveModeEnd();
+	}
+
 	// for test
 	displayVars();
 }
@@ -734,6 +749,8 @@ function showTeacherOptions(){
 
 
 /**************     presentation, element reactions     **************/
+
+
 $("body").mouseup(function(){
 	if(crtMode==MODE_ADD){
 		crtMode = MODE_EDIT;
@@ -742,6 +759,11 @@ $("body").mouseup(function(){
 	}else if(crtMode==MODE_EDIT){
 		initSelectionVars();
 	}else if(crtMode==MODE_MOVE){
+
+	}
+}).keyup(function(){
+	if(27 == event.which){
+		lessonMoveModeEnd();
 	}
 });
 
@@ -878,6 +900,48 @@ function hideResOpeDetail(elm){
 
 }
 
+function showMoveSelector(elm){
+	event.stopPropagation();
+
+	var selectorObj = $("#move_div");
+	var objTd = $(elm);
+
+	var lessonH = currentMovingLesson.end_h-currentMovingLesson.begin_h;
+	var tdH = objTd.attr("data-h")-0;
+	var tdDay = objTd.attr("data-day");
+
+	var canMoveHere = currentMovingLesson.begin_h != tdH || currentMovingLesson.day_nb != tdDay;
+	canMoveHere = canMoveHere && (tdH+lessonH<48);
+	if(canMoveHere){
+		var d = tdDay - week_first_day;
+		for(var h=0; h<=lessonH; h++){
+			if($("#cal_"+d+"_"+(h+tdH)).attr("data-statut")==0){
+				canMoveHere = false;
+				break;
+			}
+		}
+	}
+
+	if(canMoveHere){
+		var obj_end = $("#cal_"+d+"_"+(tdH+lessonH));
+		var p_lt = objTd.position();
+		var p_rb = obj_end.position();
+
+		$("#move_div")
+		.css("left",p_lt.left)
+		.css("top",p_lt.top)
+		.css("width", objTd.outerWidth())
+		.css("height",p_rb.top-p_lt.top+obj_end.outerHeight())
+		.css("display", "block");
+	}else{
+		$("#move_div").css("display", "none");
+	}
+}
+
+function hideMoveSelector(elm){
+	$("#move_div").css("display", "none");
+}
+
 function getResDetailHtml(index){
 	if(crtReservations == null || crtReservations.length<=index){
 		return "data not found";
@@ -919,11 +983,37 @@ function initPresentationElements(){
 	}
 
 	$(".cal_cell")
-	.mousedown(function(){select_begin(this)})
-	.mouseup(function(){select_end(this)})
-	.mousemove(function(){select_continue(this)})
-	.mouseover(function(){showResOpeDetail(this)})
-	.mouseout(function(){hideResOpeDetail(this)});
+	.mousedown(function(){
+		if(MODE_EDIT==crtMode){
+			select_begin(this);
+		}else if(MODE_MOVE==crtMode){
+			moveSelectedLesson(this);
+		}
+	})
+	.mouseup(function(){
+		if(MODE_MOVE!=crtMode){
+			select_end(this);
+		}
+	})
+	.mousemove(function(){
+		if(MODE_MOVE!=crtMode){
+			select_continue(this);
+		}
+	})
+	.mouseover(function(){
+		if(MODE_MOVE!=crtMode){
+			showResOpeDetail(this);
+		}else{
+			showMoveSelector(this);
+		}
+	})
+	.mouseout(function(){
+		if(MODE_MOVE!=crtMode){
+			hideResOpeDetail(this);
+		}else{
+			hideMoveSelector(this);
+		}
+	});
 }
 
 /**********  data manipunations *********/
@@ -932,6 +1022,7 @@ function clearCrtTeacherData(){
 	tid = null;
 	crtSchedules = null;
 	crtTeacherLessonsTies = null;
+	lessonMoveModeEnd();
 }
 
 function createLesson(){
