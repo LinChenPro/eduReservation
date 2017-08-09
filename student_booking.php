@@ -421,11 +421,17 @@ function getLessonPosition(day_nb, begin_h, end_h){
 
 function initView(spanObj, lesson){
 	var pos = getLessonPosition(lesson.day_nb, lesson.begin_h, lesson.end_h);
+	var idObj = lesson.ope_id+"_"+lesson.res_id;
 	spanObj.css("left", pos.left).css("top", pos.top).css("width", pos.width).css("height", pos.height);
 	spanObj.addClass(lesson.is_tiers?"tiers":"mine");
 	spanObj.addClass((lesson.tid==uid || lesson.sid==tid)? "role-invers" : null);
 	spanObj.addClass(lesson.editable? "editable" : "non_editable");
 	spanObj.addClass(getStatutClass(lesson));
+	spanObj.attr("id", idObj);
+
+	for(var h=lesson.begin_h; h<=lesson.end_h; h++){
+		$("#cal_"+(lesson.day_nb-week_first_day)+"_"+h).attr("data-lesson-obj", idObj);
+	}
 
 	var text = lesson.t_name == null? "T" : lesson.t_name;
 	text += " " + (lesson.categ_name == null? "lesson" : lesson.categ_name);
@@ -435,7 +441,7 @@ function initView(spanObj, lesson){
 }
 
 function setLessonMouseOver(obj, lesson){
-	obj.mouseover(function(evt){		
+	obj.mouseover(function(evt){
 		currentFocusLesson = lesson;
 		lessonInOperation = true;
 		showDetailSpan();
@@ -627,6 +633,7 @@ function showDatas(){
 
 	// clear old elements
 	$("#lesson_div").html("");
+	$(".cal_cell").attr("data-lesson-obj", null);
 
 	// show student lessons
 	if(crtStudentLessons != null){
@@ -780,6 +787,8 @@ function showResOpeDetail(elm){
 
 		var obj = $(elm);
 		var index = obj.attr("data-index");
+		var day_nb = obj.attr("data-day");
+		var h_nb = obj.attr("data-h");
 		if(index != null){
 			crtDetalTD = elm;
 
@@ -797,6 +806,12 @@ function showResOpeDetail(elm){
 			.html(htmlContent)
 			.show();
 		}
+
+		var lessonObjId = obj.attr("data-lesson-obj");
+		if(lessonObjId!=null){
+			$("#"+lessonObjId).mouseover();
+		}
+
 	}
 }
 
@@ -809,6 +824,12 @@ function hideResOpeDetail(elm){
 		if(crtDetalTD == elm){
 			detail_div.hide().html("");
 		}
+
+		var lessonObjId = obj.attr("data-lesson-obj");
+		if(lessonObjId!=null){
+			$("#"+lessonObjId).mouseout();
+		}
+
 }
 
 function getResDetailHtml(index){
