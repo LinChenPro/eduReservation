@@ -113,12 +113,13 @@ So the atomic opreation begin with the update of this table.
 
 
 
-current progress : 
+task done
 finish principal booking functions, 
+better creation, moving, and better view of detail span.
+submit operations to do the payment, then create the reservations.
+
 task rest:
-	better creation, moving, and better view of detail span.
-	data level : 
-		find better bending moment of prise-operation.
+	find better bending moment of prise-operation.
 
 thingking : 
 	do we realy need lock for actions like restore, delete, cancel? we should need lock for load?
@@ -127,10 +128,20 @@ thingking :
 next step:
 demande for week-uid lock in one sql query
 update reservation status when operations are expired
+manipulation of session statut and acces control due tu session
+choice de pay by purchase and balance
+solve problem of multy purchase of one reservation
+
+
+session status:
+"operating" 			pages{booking, jsons, resume} 		suite{paying, expired, cancelled}
+"Paying" 				pages{payment tiers, jsons read}	suite{paysucced, payfailed, payerrored}
+"paysucces" 			pages{result info, jsons read}		suite{}
+"payfailed","payerror"	pages{result info, jsons read}		suit{exipred, cancelled, operating} 
+
 
 
 ======================================================
-submit operations to do the payment, then create the reservations.(with the manipulation of session statut)
 
 
 1. booking_resume.php 
