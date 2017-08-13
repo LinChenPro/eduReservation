@@ -34,4 +34,4 @@ if($payment_succes==0){
 
 TODO("change session to finish statut (or delete session ?)");
 
-header("Location: student_booking.php?uid=$uid&mode=read");
+header("Location: index.php?uid=$uid");

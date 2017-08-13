@@ -349,8 +349,7 @@ function confirmConflictResOpe($tid, $sid, $day_nb, $from_h, $to_h, $selected_re
 	if($selected_res_id != null){
 		$sqlRes .= "and res_id<>$selected_res_id ";
 	}
-	// echoln();
-	// echoln($sqlRes);
+
 	$countResConflict = fieldQuery($sqlRes, "cnt", 0);
 
 	if($countResConflict>0){
@@ -359,7 +358,7 @@ function confirmConflictResOpe($tid, $sid, $day_nb, $from_h, $to_h, $selected_re
 
 	$sqlOpe  = "select count(*) as cnt from student_operation, student_session where ope_session_id=session_id ";
 	$sqlOpe .= "and session_expire_time>=CURRENT_TIMESTAMP ";
-	$sqlOpe .= "and session_statut not in(".SESSION_STATUT_ERROR.", ".SESSION_STATUT_EXPIRED.", ".SESSION_STATUT_CANCELLED.") ";
+	$sqlOpe .= "and session_statut not in(".SESSION_STATUT_EXPIRED.", ".SESSION_STATUT_CANCELLED.") ";
 	$sqlOpe .= "and ope_day_nb = $day_nb and ope_begin_nb<=$to_h and ope_end_nb>=$from_h ";
 	$sqlOpe .= "and (ope_tid in($tid, $sid) or session_sid in($tid, $sid)) ";
 	$sqlOpe .= "and not(session_sid=$sid and ope_statut=".OPE_STATUT_TODELETE.") ";
@@ -368,13 +367,11 @@ function confirmConflictResOpe($tid, $sid, $day_nb, $from_h, $to_h, $selected_re
 		$sqlOpe .= "and ope_id<>$selected_ope_id ";
 	}
 
-	// echoln($sqlOpe);
 	$countOpeConflict = fieldQuery($sqlOpe, "cnt", 0);
 
 	if($countOpeConflict>0){
 		return false;
 	}
-	// echoln();
 
 	return true;
 }
