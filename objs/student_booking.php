@@ -8,6 +8,8 @@ define("SBK_TYPE_DELETERES", "delete_res");
 define("SBK_TYPE_CANCELOPE", "cancel_ope");
 define("SBK_TYPE_MOVE", "move_lesson");
 
+define("SBK_ERROR_SESSION_STATUT", "SBK_ERROR_SESSION_STATUT");
+
 
 class ActionResult{
 	public $succes;
@@ -201,7 +203,7 @@ function createOperation($categ_id, $tid, $sid, $day_nb, $from_h, $to_h, $tp_id)
 	$week_nb = dayNbToWeekNb($day_nb);
 
 	$session_id = getExistSessionId($sid);
-	if($session_id==null){
+	if(sessionIdAvailable($session_id)){
 		return new ActionResult(false, null, "Your edit session is expired.");
 	}
 
@@ -239,9 +241,8 @@ function moveLessonTo($ope_id, $res_id, $tid, $sid, $dest_week_nb, $dest_day_nb,
 		$sid = $reservation->sid;
 		$tid = $reservation->tid;
 
-		TODO("find better way to treate session");
 		$session_id = getExistSessionId($sid);
-		if($session_id==null){
+		if(sessionIdAvailable($session_id)){
 			return new ActionResult(false, null, "Your edit session is expired.");
 		}
 
@@ -288,9 +289,8 @@ function deleteReservation($res_id){
 	$sid = $reservation->sid;
 	$tid = $reservation->tid;
 
-	TODO("find better way to treate session");
-	$session_id = getExistSessionId($sid);
-	if($session_id==null){
+	$session_id = getExistSessionId($sid);	
+	if(sessionIdAvailable($session_id)){
 		return new ActionResult(false, null, "Your edit session is expired.");
 	}
 
@@ -433,8 +433,6 @@ function applyOperations($session_id, ...$ope_status){
 	query($sqlClean);
 
 }
-
-
 
 
 

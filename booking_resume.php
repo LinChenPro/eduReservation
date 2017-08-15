@@ -39,13 +39,12 @@ function addPurchaseToItem(&$arr, $purchase){
 
 $uid = getCurrentUid();
 $user = dbFindByKey("User", $uid);
-$session = getExistSession($uid);
 
 $userBalance = fieldQuery("select sb_amount from student_balance where sb_sid=$uid", "sb_amount", 0);
-$userPurchases = getSessionRelativePurchases($session);
+$userPurchases = getSessionRelativePurchases($sm_demande_session);
 $userFinalPaymentAmount = 0;
 
-$userOperations = getOperationsBySessionId($session->session_id);
+$userOperations = getOperationsBySessionId($sm_demande_session->session_id);
 
 $userLessonsToDelete = array();
 $userLessonsToCreate = array();
@@ -268,9 +267,9 @@ select payment type:
 <br><input type="radio" name="payment_type"/>credit card 
 
 <br>
-<a href="student_booking.php?uid=<?=$uid?>" class="button">change my choises</a>
+<a href="student_booking.php?uid=<?=$uid?>&<?=(SESSION_DEMANDE_ID_PARAM."=".$sm_demande_session->session_id)?>" class="button">change my choises</a>
 
-<a href="booking_payment.php?uid=<?=$uid?>" class="button">payment</a>
+<a href="booking_payment.php?uid=<?=$uid?>&<?=(SESSION_DEMANDE_ID_PARAM."=".$sm_demande_session->session_id)?>" class="button">payment</a>
 
 <?php
 include_once('defines/environnement_foot.php');

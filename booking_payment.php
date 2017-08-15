@@ -22,8 +22,8 @@ TODO("change current session statut");
 
 </div>
 ( payment result simulation buttons )<br>
-<a href="booking_payment_result.php?uid=<?=$uid?>&succes=1" class="button">payment succes</a>
-<a href="booking_payment_result.php?uid=<?=$uid?>&succes=0&err_msg=payment_refused_by_xxxx_raison" class="button">payment failed</a>
+<a href="booking_payment_result.php?uid=<?=$uid?>&<?=(SESSION_DEMANDE_ID_PARAM."=".$sm_demande_session->session_id)?>&succes=1" class="button">payment succes</a>
+<a href="booking_payment_result.php?uid=<?=$uid?>&<?=(SESSION_DEMANDE_ID_PARAM."=".$sm_demande_session->session_id)?>&succes=0&err_msg=payment_refused_by_xxxx_raison" class="button">payment failed</a>
 
 
 <?php

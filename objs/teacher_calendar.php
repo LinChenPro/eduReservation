@@ -273,7 +273,7 @@ function getOperationsBySessionId($session_id, ...$clauses){
 	$sql = "select student_operation.*, student_session.session_sid as sid, t.user_name as t_name, categ_name, "
 		."student_session.session_create_time as session_create_time, student_session.session_id as session_id, "
 		."res_day_nb, res_begin_nb, res_end_nb, tp_prise "
-		."from student_session, teacher_prise, users as t, categories,student_operation left join reservation on res_id=ope_res_id where ope_session_id=session_id "
+		."from student_session, teacher_prise, users as t, categories,student_operation left join reservation on res_id=ope_res_id where ope_session_id=session_id and session_id=$session_id "
 		."and t.user_id=ope_tid and categ_id=ope_categ_id and tp_id=ope_tp_id";
 	if(!empty($clauses)){
 		$sql .= concat(" and ", " and ", ...$clauses);

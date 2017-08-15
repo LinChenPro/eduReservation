@@ -18,9 +18,12 @@ require_once('objs/categ.php');
 require_once('objs/user.php');
 require_once('objs/teacher_categ.php');
 require_once('objs/operation_session.php');
+
 require_once('objs/teacher_calendar.php'); //?
 require_once('objs/student_booking.php');  //?
 
+// treate session
+initSessionSituation();
 
 // views
 

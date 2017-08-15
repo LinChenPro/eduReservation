@@ -5,10 +5,6 @@ require_once('defines/environnement_head.php');
 
 $uid = getCurrentUid();
 $user = dbFindByKey("User", $uid);
-$currentSession = getOrCreateSession($uid);
-if($currentSession->session_statut!=SESSION_STATUT_INOPERATION){
-	TODO("booking : forbidden normal operations to session in special statut");
-}
 
 $demand_action = $_REQUEST["action"];
 $demand_tid = $_REQUEST["tid"];
@@ -16,6 +12,39 @@ $demand_sid = $_REQUEST["sid"];
 $demand_categ_id = $_REQUEST["categ_id"];
 $demand_week_nb = $_REQUEST["week_nb"];
 $demand_timestamp = $_REQUEST["timestamp"];
+
+if(
+	(
+		in_array(
+			$demand_action, 
+			array(SBK_TYPE_TEACHERLIST, SBK_TYPE_LOAD, SBK_TYPE_REFRESH)
+		) && !in_array(
+			$sm_demande_session->session_statut, array(SESSION_STATUT_INOPERATION, SESSION_STATUT_PAY_RESUME)
+		)
+	)||(
+		in_array(
+			$demand_action, 
+			array(SBK_TYPE_MOVE,SBK_TYPE_RESTORE,SBK_TYPE_DELETERES,SBK_TYPE_CANCELOPE,SBK_TYPE_CREATE)
+		) && !in_array(
+			$sm_demande_session->session_statut, 
+			array(SESSION_STATUT_INOPERATION)
+		)
+	)
+){
+	$responseObj = StudentCalendarResponse::newInstance(
+		$demand_tid, 
+		$demand_sid, 
+		$demand_categ_id, 
+		$demand_action, 
+		$demand_week_nb, 
+		$demand_timestamp, 
+		false
+	);
+	$responseObj->error = SBK_ERROR_SESSION_STATUT_ERROR;
+	$responseObj->infos = getCurrentSessionPage($sm_demande_session);
+	echo json_encode($responseObj);
+	exit();
+}
 
 /*
 $demand_action = $_POST["action"];
@@ -29,7 +58,7 @@ if($demand_action==SBK_TYPE_TEACHERLIST){
 		echo json_encode(array());
 	}else{
 		// no need to block, but maybe need a time stamp to read the update.
-		$responseObj = getCurrentCategTeachers($demand_categ_id, $demand_sid, $currentSession->session_create_time);
+		$responseObj = getCurrentCategTeachers($demand_categ_id, $demand_sid, $sm_demande_session->session_create_time);
 		if($responseObj==null){
 			$responseObj = array();
 		}

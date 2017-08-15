@@ -28,9 +28,11 @@ $page_session_infos = array(
 		'initSessionFun' => function(){
 			global $sm_demande_session;
 			global $sm_last_user_session;
+			global $page_infos;
+			global $SESSION_FINAL_STATUS;
 
 			// 1 : if no session demande, use exited available last session
-			if($sm_demande_session==null){
+			if($sm_demande_session==null || in_array($sm_demande_session->session_statut, $SESSION_FINAL_STATUS)){
 				if(!in_array($sm_last_user_session->session_statut, $SESSION_FINAL_STATUS)){
 					$sm_demande_session = $sm_last_user_session; 
 				}
@@ -55,12 +57,19 @@ $page_session_infos = array(
 	),
 	"student_booking_treate" => array(
 		'initSessionFun' => function(){
+			if($sm_demande_session==null){
+				if(!in_array($sm_last_user_session->session_statut, $SESSION_FINAL_STATUS)){
+					$sm_demande_session = $sm_last_user_session; 
+				}
+			}
 		}
 	),
 	"booking_resume" => array(
 		'initSessionFun' => function(){
 			global $sm_demande_session;
 			global $sm_last_user_session;
+			global $page_infos;
+			global $SESSION_FINAL_STATUS;
 
 			// if no session demande, use exited available last session
 			if($sm_demande_session==null){
@@ -71,23 +80,28 @@ $page_session_infos = array(
 
 			// return to home page if no available demande session
 			if($sm_demande_session==null){
-				$page_file = $page_infos["index"]["file"]."?uid=$uid";
+				$page_file = $page_infos["index"]["file"]."?uid=".getCurrentUid();
 				header("Location: $page_file");	
 			}
 
 			// 2 : different treatement due to de demande session's current statut
 			if(in_array(
 				$sm_demande_session->session_statut, 
-				array(SESSION_STATUT_INOPERATION, SESSION_STATUT_PAY_RESUME)
+				array(SESSION_STATUT_INOPERATION, SESSION_STATUT_PAY_RESUME, SESSION_STATUT_PAY_ERROR, SESSION_STATUT_PAY_FAILED)
 			)){
-				changeSessionStatut($sm_demande_session, SESSION_STATUT_RESUME);
+				changeSessionStatut($sm_demande_session, SESSION_STATUT_PAY_RESUME);
 			}else{
-				loadPageBySession($sm_demande_session);
+//				loadPageBySession($sm_demande_session);
 			}
 		}
 	),
 	"booking_payment" => array(
 		'initSessionFun' => function(){
+			global $sm_demande_session;
+			global $sm_last_user_session;
+			global $page_infos;
+			global $SESSION_FINAL_STATUS;
+
 			// if no session demande, use exited available last session
 			if($sm_demande_session==null){
 				if(!in_array($sm_last_user_session->session_statut, $SESSION_FINAL_STATUS)){
@@ -97,7 +111,7 @@ $page_session_infos = array(
 
 			// return to home page if no available demande session
 			if($sm_demande_session==null){
-				$page_file = $page_infos["index"]["file"]."?uid=$uid";
+				$page_file = $page_infos["index"]["file"]."?uid=".getCurrentUid();
 				header("Location: $page_file");	
 			}
 
@@ -107,6 +121,11 @@ $page_session_infos = array(
 				array(SESSION_STATUT_PAY_RESUME)
 			)){
 				changeSessionStatut($sm_demande_session, SESSION_STATUT_PAY_START);
+			}else if(in_array(
+				$sm_demande_session->session_statut, 
+				array(SESSION_STATUT_PAY_START)
+			)){
+				// do nothing
 			}else{
 				loadPageBySession($sm_demande_session);
 			}
@@ -115,6 +134,11 @@ $page_session_infos = array(
 	),
 	"booking_payment_result" => array(
 		'initSessionFun' => function(){
+			global $sm_demande_session;
+			global $sm_last_user_session;
+			global $page_infos;
+			global $SESSION_FINAL_STATUS;
+
 			// if no session demande, use exited available last session
 			if($sm_demande_session==null){
 				if(!in_array($sm_last_user_session->session_statut, $SESSION_FINAL_STATUS)){
@@ -124,12 +148,28 @@ $page_session_infos = array(
 
 			// return to home page if no available demande session
 			if($sm_demande_session==null){
-				$page_file = $page_infos["index"]["file"]."?uid=$uid";
+				$page_file = $page_infos["index"]["file"]."?uid=".getCurrentUid();
 				header("Location: $page_file");	
 			}
 
 			// 2 : different treatement due to de demande session's current statut
-			if(!in_array(
+			if(in_array(
+				$sm_demande_session->session_statut, 
+				array(SESSION_STATUT_PAY_START)
+			)){
+				// get payment result (simu) 
+				TODO("implement real params in payment module");
+				$payment_succes = $_REQUEST["succes"];
+				$payment_err_msg = $_REQUEST["err_msg"];
+
+				if($payment_succes){
+					applyOperations($sm_demande_session->session_id, OPE_STATUT_TOCREATE, OPE_STATUT_TODELETE, OPE_STATUT_TOMOVE);
+					changeSessionStatut($sm_demande_session, SESSION_STATUT_PAY_SUCCES);
+				}else{
+					changeSessionStatut($sm_demande_session, SESSION_STATUT_PAY_FAILED);
+				}
+
+			}else if(!in_array(
 				$sm_demande_session->session_statut, 
 				array(SESSION_STATUT_PAY_START, SESSION_STATUT_PAY_SUCCES, SESSION_STATUT_PAY_ERROR, SESSION_STATUT_PAY_FAILED)
 			)){
@@ -139,6 +179,11 @@ $page_session_infos = array(
 	),
 	"booking_confirm" => array(
 		'initSessionFun' => function(){
+			global $sm_demande_session;
+			global $sm_last_user_session;
+			global $page_infos;
+			global $SESSION_FINAL_STATUS;
+
 			// if no session demande, use exited available last session
 			if($sm_demande_session==null){
 				if(!in_array($sm_last_user_session->session_statut, $SESSION_FINAL_STATUS)){
@@ -148,10 +193,35 @@ $page_session_infos = array(
 
 			// return to home page if no available demande session
 			if($sm_demande_session==null){
-				$page_file = $page_infos["index"]["file"]."?uid=$uid";
+				$page_file = $page_infos["index"]["file"]."?uid=".getCurrentUid();
 				header("Location: $page_file");	
 			}
 
+			if(in_array($sm_demande_session->session_statut, array(SESSION_STATUT_PAY_ERROR, SESSION_STATUT_PAY_FAILED))){
+				$do_delete = $_REQUEST["do_delete"];
+				$do_move = $_REQUEST["do_move"];
+
+				$arrApply = array();
+				$arrAbandon = array(OPE_STATUT_TOCREATE);
+
+				if($do_delete==1){
+					array_push($arrApply, OPE_STATUT_TODELETE);
+				}else{
+					array_push($arrAbandon, OPE_STATUT_TODELETE);
+				}
+
+				if($do_move==1){
+					array_push($arrApply, OPE_STATUT_TOMOVE);		
+				}else{
+					array_push($arrAbandon, OPE_STATUT_TOMOVE);
+				}
+
+				applyOperations($session->session_id, ...$arrApply);
+				abandonOperations($session->session_id, ...$arrAbandon);
+				changeSessionStatut($sm_demande_session, SESSION_STATUT_CANCELLED);
+			}else{
+				loadPageBySession($sm_demande_session);
+			}
 		}
 	)
 );
@@ -184,13 +254,13 @@ class StudentSession{
 
 	public function needBeExpired(){
 		global $SESSION_EXPIRABLE_STATUS;
-		return isExpireTimePassed && in_array($this->session_statut, $SESSION_EXPIRABLE_STATUS); 	
+		return $this->isExpireTimePassed() && in_array($this->session_statut, $SESSION_EXPIRABLE_STATUS); 	
 	}
 
 }
 
 function getExistSessionId($sid){
-	$sql = "select session_id from student_session where session_sid=$sid and session_expire_time>CURRENT_TIMESTAMP";
+	$sql = "select session_id from student_session where session_sid=$sid and session_statut and session_expire_time>CURRENT_TIMESTAMP order by session_id desc";
 	return dbGetObjByQuery($sql, function($line){
 		return $line["session_id"];
 	});
@@ -261,7 +331,7 @@ function addOperation($tid, $sid, $categ_id, $tp_id, $week_nb, $day_nb, $begin_n
 }
 
 function getDemandeSessionId(){
-	return $demande_session_id = $_REQUEST[SESSION_DEMANDE_ID_PARAM];
+	return $_REQUEST[SESSION_DEMANDE_ID_PARAM];
 }
 
 function getDemandeSession(){
@@ -283,15 +353,20 @@ function getCrtUserLastSession(){
 }
 
 function getStudentLastSession($sid){
-	return dbFindObj("StudentSession", "session_sid=$sid", "session_id in(select max(session_id from student_session where session_sid=$sid))");
+	return dbFindObj("StudentSession", "session_sid=$sid", "session_id in(select max(session_id) from student_session where session_sid=$sid)");
 }
 
 function changeSessionStatut(&$session, $statut){
-	query("update student_session set session_statut=$statut where session_id=".$session->session_sid);
+	query("update student_session set session_statut=$statut where session_id=".$session->session_id);
 	$session->session_statut = $statut;
 }
 
 function loadPageBySession($session){
+	$page_file = getCurrentSessionPage($session);
+	header("Location: $page_file");	
+}
+
+function getCurrentSessionPage($session){
 	$page_file = null;
 	global $page_infos;
 	if($session->session_statut==SESSION_STATUT_INOPERATION){
@@ -311,12 +386,12 @@ function loadPageBySession($session){
 	}
 
 	if($page_file==null){
-		$page_file = $page_infos["index"]["file"]."?uid=$uid";
+		$page_file = $page_infos["index"]["file"]."?uid=".getCurrentUid();
 	}else{
-		$page_file .= "?uid=$uid&".SESSION_DEMANDE_ID_PARAM."=".$session->session_id;
+		$page_file .= "?uid=".getCurrentUid()."&".SESSION_DEMANDE_ID_PARAM."=".$session->session_id;
 	}
 
-	header("Location: $page_file");	
+	return $page_file;
 }
 
 function initSessionSituation(){
@@ -326,13 +401,23 @@ function initSessionSituation(){
 	global $page_session_infos;
 	global $page_name;
 
+	if(!array_key_exists($page_name, $page_session_infos)){
+		return;
+	}
+
 	$sm_last_user_session = getCrtUserLastSession();
 	if($sm_last_user_session != null && $sm_last_user_session->needBeExpired()){
 		changeSessionStatut($sm_last_user_session, SESSION_STATUT_EXPIRED);
 	}
+
 	$sm_demande_session = getDemandeSession();
-	$page_session_infos[$page_name]["initSessionFun"]();
+	call_user_func_array($page_session_infos[$page_name]["initSessionFun"], array());
+
 }
 
+function sessionIdAvailable($session_id){
+	global $sm_demande_session;
+	return ($session_id==null || $sm_demande_session->session_id != $session_id);
+}
 
 

@@ -6,10 +6,6 @@ require_once('defines/environnement_head.php');
 $uid = getCurrentUid();
 $user = dbFindByKey("User", $uid);
 
-$currentSession = getOrCreateSession($uid);
-if($currentSession->session_statut!=SESSION_STATUT_INOPERATION){
-	TODO("booking : forbidden normal operations to session in special statut");
-}
 ?>
 
 <script src="/js/jquery-3.2.1.min.js"></script>
@@ -23,7 +19,7 @@ if($currentSession->session_statut!=SESSION_STATUT_INOPERATION){
 		<option value="">Please select a category</option>
 <?php
 // options of categories
-$categs = Categ::getCategs("categ_id in(select distinct(tc_categ_id) from teacher_categ where (tc_expire_time is null or tc_expire_time>'".$currentSession->session_create_time."'))");
+$categs = Categ::getCategs("categ_id in(select distinct(tc_categ_id) from teacher_categ where (tc_expire_time is null or tc_expire_time>'".$sm_demande_session->session_create_time."'))");
 if(!empty($categs)){
 	foreach ($categs as $categ) {
 ?>		
@@ -90,14 +86,14 @@ for($h=0; $h<48; $h++){
 ?>		
 	</table>
 </div>
-<a href="booking_resume.php?uid=<?="$uid"?>" class="button">submit</a>
+<a href="booking_resume.php?uid=<?="$uid"?>&<?=(SESSION_DEMANDE_ID_PARAM."=".$sm_demande_session->session_id)?>" class="button">submit</a>
 <br>
 <textarea id="showData" style="width:80%;margin:10px;padding:10px;border:1px solid black;height:300px" rows="50"></textarea>
 
 
 <script type="text/javascript">
 /************  param js:  **************/
-var demandeUrl = "/student_booking_treate.php?uid=<?=$uid?>"
+var demandeUrl = "/student_booking_treate.php?uid=<?=$uid?>&<?=(SESSION_DEMANDE_ID_PARAM."=".$sm_demande_session->session_id)?>"
 
 // datas
 
@@ -145,15 +141,15 @@ var queryGetTeacherLists = null;	// *+
 */
 
 // ajax query objects
-var queryLoad = new AjaxQuery("queryLoad", showScheduleData, autoSBKRefresh, demandeUrl);
-var queryRefresh = new AjaxQuery("queryRefresh", showScheduleData, autoSBKRefresh, demandeUrl, true);
-var queryTeacherList = new AjaxQuery("queryTeacherList", feedTeacherSelector, autoSBKRefresh, demandeUrl);
-var queryGotoCategTeacher = new AjaxQuery("queryGotoCategTeacher", gotoSelectedTeacher, autoSBKRefresh, demandeUrl);
-var queryCreate = new AjaxQuery("queryCreate", showScheduleData, autoSBKRefresh, demandeUrl);
-var queryRestore = new AjaxQuery("queryRestore", showScheduleData, autoSBKRefresh, demandeUrl);
-var queryDeleteRes = new AjaxQuery("queryDeleteRes", showScheduleData, autoSBKRefresh, demandeUrl);
-var queryCancelOpe = new AjaxQuery("queryCancelOpe", showScheduleData, autoSBKRefresh, demandeUrl);
-var queryMoveLesson = new AjaxQuery("queryMoveLesson", showScheduleData, autoSBKRefresh, demandeUrl);
+var queryLoad = new AjaxQuery("queryLoad", treatError, showScheduleData, autoSBKRefresh, demandeUrl);
+var queryRefresh = new AjaxQuery("queryRefresh", treatError, showScheduleData, autoSBKRefresh, demandeUrl, true);
+var queryTeacherList = new AjaxQuery("queryTeacherList", treatError, feedTeacherSelector, autoSBKRefresh, demandeUrl);
+var queryGotoCategTeacher = new AjaxQuery("queryGotoCategTeacher", treatError, gotoSelectedTeacher, autoSBKRefresh, demandeUrl);
+var queryCreate = new AjaxQuery("queryCreate", treatError, showScheduleData, autoSBKRefresh, demandeUrl);
+var queryRestore = new AjaxQuery("queryRestore", treatError, showScheduleData, autoSBKRefresh, demandeUrl);
+var queryDeleteRes = new AjaxQuery("queryDeleteRes", treatError, showScheduleData, autoSBKRefresh, demandeUrl);
+var queryCancelOpe = new AjaxQuery("queryCancelOpe", treatError, showScheduleData, autoSBKRefresh, demandeUrl);
+var queryMoveLesson = new AjaxQuery("queryMoveLesson", treatError, showScheduleData, autoSBKRefresh, demandeUrl);
 
 // ajax request type constants
 var SBK_TYPE_LOAD = "<?=SBK_TYPE_LOAD?>";
@@ -164,6 +160,8 @@ var SBK_TYPE_RESTORE = "<?=SBK_TYPE_RESTORE?>";
 var SBK_TYPE_DELETERES = "<?=SBK_TYPE_DELETERES?>";
 var SBK_TYPE_CANCELOPE = "<?=SBK_TYPE_CANCELOPE?>";
 var SBK_TYPE_MOVE = "<?=SBK_TYPE_MOVE?>";
+
+var SBK_ERROR_SESSION_STATUT_ERROR = "<?=SBK_ERROR_SESSION_STATUT_ERROR?>";
 
 var LESSON_STATUT_DELETING = "<?=LESSON_STATUT_DELETING?>"
 var LESSON_STATUT_CREATING = "<?=LESSON_STATUT_CREATING?>"
@@ -312,6 +310,17 @@ function moveLesson(ope_id, res_id, lesson_tid, lesson_sid, orig_week, dest_week
 		'dest_end_h' : dest_end_h
 	};
 	queryMoveLesson.sendAjaxQuery(demande);
+}
+
+function treatError(responseData){
+	var error = responseData["error"];
+	if(error==SBK_ERROR_SESSION_STATUT_ERROR){
+		alert(responseData["infos"]);
+		location.href = responseData["infos"];
+		return false;
+	}
+
+	return true;
 }
 
 function displayVars(responseData){

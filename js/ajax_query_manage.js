@@ -1,5 +1,6 @@
-function AjaxQuery(name, responseFun, followedByFun, url, abortable=false){
+function AjaxQuery(name, errorFun, responseFun, followedByFun, url, abortable=false){
 	this.name = name;
+	this.errorFun = errorFun;
 	this.url = url;
 	this.responseFun = responseFun;
 	this.followedByFun = followedByFun;
@@ -35,6 +36,12 @@ AjaxQuery.abortRefreshAjax = function(){
 }
 
 AjaxQuery.prototype.treatResponse = function(responseData){
+	if(responseData["error"] != null){
+		if(!this.errorFun(responseData)){
+			return;
+		}
+	}
+
 	this.responseFun(responseData);
 	this.query = null;
 	if(this.followedByFun != null){
